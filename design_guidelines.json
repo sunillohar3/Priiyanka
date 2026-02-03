@@ -1,0 +1,133 @@
+{
+  "brand_identity": {
+    "name": "Priiyanka's Nature Nest",
+    "tagline": "Where Nature Nurtures You",
+    "tone": "Nurturing, Authentic, Professional, Serene",
+    "theme": "light",
+    "compliance": {
+      "association": "LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten)",
+      "registration_number": "KVK 98872109",
+      "therapist_title": "VD. Priyanka Singh (B.A.M.S)",
+      "mandatory_footer_elements": [
+        "LVNT Logo",
+        "KVK Number",
+        "AGB Code (placeholder)",
+        "Privacy Policy",
+        "Terms & Conditions",
+        "Klachtenprocedure (Wkkgz)"
+      ]
+    }
+  },
+  "colors": {
+    "primary": "#0A4F2A",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#3A8B3A",
+    "secondary_foreground": "#FFFFFF",
+    "accent": "#926F3F",
+    "accent_foreground": "#FFFFFF",
+    "background": "#F5EBDD",
+    "foreground": "#2C3E2D",
+    "muted": "#E8DFD0",
+    "muted_foreground": "#5C6B5D",
+    "card": "#FFFFFF",
+    "card_foreground": "#2C3E2D",
+    "border": "#D2C4B0",
+    "input": "#FFFFFF",
+    "ring": "#3A8B3A",
+    "destructive": "#C04638",
+    "chart": {
+      "1": "#0A4F2A",
+      "2": "#3A8B3A",
+      "3": "#926F3F",
+      "4": "#D4A373",
+      "5": "#E9EDC9"
+    }
+  },
+  "typography": {
+    "font_family_heading": "\"Playfair Display\", serif",
+    "font_family_body": "\"Manrope\", sans-serif",
+    "font_family_handwriting": "\"Dancing Script\", cursive",
+    "scale": {
+      "h1": "text-5xl md:text-6xl font-bold tracking-tight",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+      "h3": "text-2xl md:text-3xl font-medium",
+      "body": "text-base md:text-lg leading-relaxed",
+      "small": "text-sm font-medium tracking-wide uppercase"
+    }
+  },
+  "layout": {
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "spacing": {
+      "section_padding": "py-20 md:py-32",
+      "element_gap": "gap-8"
+    },
+    "grid_strategy": "Bento Grid for Services (Asymmetrical), Dense Grid for Admin",
+    "radius": "rounded-2xl"
+  },
+  "ui_patterns": {
+    "buttons": {
+      "primary": "bg-[#0A4F2A] text-white hover:bg-[#3A8B3A] rounded-full px-8 py-3 transition-all duration-300 shadow-lg hover:shadow-xl",
+      "secondary": "bg-transparent border-2 border-[#0A4F2A] text-[#0A4F2A] hover:bg-[#0A4F2A] hover:text-white rounded-full px-8 py-3 transition-all duration-300",
+      "ghost": "hover:bg-[#0A4F2A]/10 text-[#0A4F2A] rounded-lg px-4 py-2"
+    },
+    "cards": {
+      "service": "bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-[#E8DFD0] group",
+      "feature": "bg-[#F5EBDD] p-8 rounded-2xl border border-[#D2C4B0]/50"
+    },
+    "navigation": {
+      "style": "sticky top-0 z-50 bg-[#F5EBDD]/80 backdrop-blur-md border-b border-[#D2C4B0]/30",
+      "elements": ["Logo (Left)", "Links (Center)", "Lang Switch + Cart + Auth (Right)"]
+    },
+    "inputs": "bg-white border-[#D2C4B0] focus:ring-[#3A8B3A] rounded-lg px-4 py-3"
+  },
+  "content_strategy": {
+    "languages": ["nl", "en"],
+    "default_language": "nl",
+    "key_translations": {
+      "book_now": {"en": "Book Now", "nl": "Nu Boeken"},
+      "services": {"en": "Services", "nl": "Diensten"},
+      "about": {"en": "About", "nl": "Over Ons"},
+      "contact": {"en": "Contact", "nl": "Contact"},
+      "cart": {"en": "Cart", "nl": "Winkelwagen"}
+    },
+    "services_list": [
+      {"name": "Ayurvedic Consultation", "price": 65, "duration": "60 min", "description": "Comprehensive assessment of your body constitution (Prakriti)."},
+      {"name": "Abhyanga Massage", "price": 80, "duration": "60 min", "description": "Full body traditional Ayurvedic oil massage for relaxation and detox."},
+      {"name": "Shirodhara", "price": 85, "duration": "45 min", "description": "Continuous pouring of medicated oil on the forehead for stress relief."},
+      {"name": "Udavartana", "price": 100, "duration": "60 min", "description": "Herbal powder massage for weight loss and skin toning."},
+      {"name": "Pinda Sweda", "price": 65, "duration": "60 min", "description": "Herbal stamp massage for pain relief and rejuvenation."}
+    ]
+  },
+  "image_strategy": {
+    "style": "Soft, natural light, organic textures, authentic Ayurvedic elements. Avoid generic clinical spa images.",
+    "border_radius": "rounded-2xl",
+    "overlays": "Use subtle gradient overlays (from bottom #0A4F2A to transparent) for text readability on images.",
+    "assets": {
+      "hero_bg": "https://images.unsplash.com/photo-1685881050089-746db3e93938?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGZvcmVzdCUyMHN1bmxpZ2h0JTIwbmF0dXJlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzAxMzI0NDN8MA&ixlib=rb-4.1.0&q=85",
+      "massage_service": "https://images.unsplash.com/photo-1686485237901-5095a553453e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHw0fHxheXVydmVkYSUyMG1hc3NhZ2UlMjBzcGF8ZW58MHx8fHwxNzcwMTMyNDQyfDA&ixlib=rb-4.1.0&q=85",
+      "herbal_prep": "https://images.unsplash.com/photo-1768729340731-85e386e62529?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTV8MHwxfHNlYXJjaHwxfHxtZWRpY2luYWwlMjBoZXJicyUyMG1vcnRhciUyMHBlc3RsZXxlbnwwfHx8fDE3NzAxMzI0NDN8MA&ixlib=rb-4.1.0&q=85",
+      "lotus_calm": "https://images.unsplash.com/photo-1725277220846-7a40b8380929?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwzfHxjYWxtaW5nJTIwbmF0dXJlJTIwZm9yZXN0JTIwbmV0aGVybGFuZHMlMjBncmVlbiUyMGxvdHVzJTIwZmxvd2VyfGVufDB8fHx8MTc3MDEzMjQzNnww&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "universal_guidelines": [
+    "Do not use generic 'Inter' font for headings. Use 'Playfair Display'.",
+    "Ensure 2-3x generous spacing between sections (py-24 or py-32).",
+    "Use 'sonner' for toast notifications.",
+    "Interactive elements must have 'data-testid'.",
+    "No gradients on text. Use solid, high-contrast colors.",
+    "Mobile images max height 80vh.",
+    "Footer must be high contrast (Dark Green background) with all compliance links.",
+    "Language switcher must be easily accessible in the nav bar."
+  ],
+  "instructions_to_main_agent": {
+    "steps": [
+      "1. Setup Tailwind config with the custom color palette (forest green, cream).",
+      "2. Install 'lucide-react' for icons and '@radix-ui/react-icons' if needed.",
+      "3. Create the 'LanguageContext' to handle EN/NL switching globally.",
+      "4. Build the Layout (Nav, Footer) with compliance text.",
+      "5. Implement the Service Catalog with Cart functionality (Context based).",
+      "6. Build the Admin Dashboard (Services CRUD, Bookings view) - Keep it clean/dense.",
+      "7. Ensure the Booking Flow captures: Service, Date, Time, User Details."
+    ]
+  }
+}
