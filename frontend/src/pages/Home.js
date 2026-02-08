@@ -116,10 +116,10 @@ const Home = () => {
                 </Button>
               </Link>
             </div>
-            <div className="relative h-[500px] rounded-2xl overflow-hidden">
+            <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1686485237901-5095a553453e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHw0fHxheXVydmVkYSUyMG1hc3NhZ2UlMjBzcGF8ZW58MHx8fHwxNzcwMTMyNDQyfDA&ixlib=rb-4.1.0&q=85"
-                alt="Ayurveda Treatment"
+                src="https://customer-assets.emergentagent.com/job_priiyanka-nature/artifacts/xt0dda6u_profile.jpg"
+                alt="VD. Priyanka Singh - Ayurvedic Consultant"
                 className="w-full h-full object-cover"
               />
             </div>
