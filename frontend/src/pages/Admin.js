@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
