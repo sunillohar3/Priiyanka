@@ -17,6 +17,14 @@ const Footer = () => {
               VD. Priyanka Singh<br />
               B.A.M.S Ayurvedic Consultant
             </p>
+            <div className="mt-6 flex gap-4">
+              <div className="bg-white p-2 rounded">
+                <img src="https://via.placeholder.com/60x60/0A4F2A/FFFFFF?text=LVNT" alt="LVNT Logo" className="h-12 w-12" />
+              </div>
+              <div className="bg-white p-2 rounded">
+                <img src="https://via.placeholder.com/60x60/0A4F2A/FFFFFF?text=RBCZ" alt="RBCZ Logo" className="h-12 w-12" />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -34,8 +42,10 @@ const Footer = () => {
               <Link to="/privacy" className="block hover:text-accent transition-colors">{t('footer.privacy')}</Link>
               <Link to="/terms" className="block hover:text-accent transition-colors">{t('footer.terms')}</Link>
               <Link to="/complaint" className="block hover:text-accent transition-colors">{t('footer.complaint')}</Link>
-              <p className="text-primary-foreground/80 mt-4">KVK No: 98872109</p>
-              <p className="text-primary-foreground/80">LVNT Member</p>
+              <p className="text-primary-foreground/80 mt-4">KVK: 98872109</p>
+              <p className="text-primary-foreground/80">VAT: NL005359083B24</p>
+              <p className="text-primary-foreground/80 mt-2">LVNT Member</p>
+              <p className="text-primary-foreground/80">RBCZ Registered</p>
             </div>
           </div>
 
@@ -61,6 +71,7 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center text-sm text-primary-foreground/80">
           <p>© {new Date().getFullYear()} Priiyanka's Nature Nest. {t('footer.rights')}.</p>
           <p className="mt-2">Compliant with LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten) regulations.</p>
+          <p className="mt-1">Subject to RBCZ (Register Beroepsbeoefenaren Complementaire Zorg) standards.</p>
         </div>
       </div>
     </footer>
