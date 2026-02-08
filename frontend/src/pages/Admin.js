@@ -455,27 +455,60 @@ const Admin = () => {
 
             {activeTab === 'users' && (
               <div>
-                <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Users</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-heading font-semibold text-foreground">Manage Users</h2>
+                  <div className="text-sm text-muted-foreground">
+                    Total Users: {users.length} | Admins: {users.filter(u => u.role === 'admin').length}
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {users.map((u) => (
-                    <div key={u.user_id} className="border border-border rounded-xl p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-foreground">{u.name}</p>
-                        <p className="text-sm text-muted-foreground">{u.email}</p>
-                      </div>
-                      <div className="flex gap-2 items-center">
-                        <select
-                          value={u.role}
-                          onChange={(e) => handleUpdateUserRole(u.user_id, e.target.value)}
-                          className="px-4 py-2 rounded-lg border border-border bg-background"
-                          data-testid={`user-role-${u.user_id}`}
-                        >
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                    <div key={u.user_id} className="border border-border rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {u.picture && (
+                            <img src={u.picture} alt={u.name} className="w-12 h-12 rounded-full" />
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-foreground">{u.name}</p>
+                              {u.role === 'admin' && (
+                                <span className="px-2 py-1 bg-primary text-primary-foreground rounded-full text-xs font-medium">
+                                  ADMIN
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{u.email}</p>
+                            <p className="text-xs text-muted-foreground mt-1">User ID: {u.user_id}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleUpdateUserRole(u.user_id, e.target.value)}
+                            className="px-4 py-2 rounded-lg border border-border bg-background font-medium"
+                            data-testid={`user-role-${u.user_id}`}
+                          >
+                            <option value="user">👤 User</option>
+                            <option value="admin">👑 Admin</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   ))}
+                </div>
+                
+                <div className="mt-8 p-6 bg-muted/50 rounded-xl border border-border">
+                  <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    Admin Management Tips
+                  </h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Use the dropdown to promote users to Admin or demote them to User</li>
+                    <li>• Changes take effect immediately - users may need to refresh their page</li>
+                    <li>• Admins can manage services, bookings, orders, and other users</li>
+                    <li>• Regular users can only view their own bookings and orders</li>
+                  </ul>
                 </div>
               </div>
             )}
