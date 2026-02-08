@@ -7,7 +7,7 @@ const About = () => {
 
   return (
     <div className="min-h-screen py-20">
-      <div className="max-w-4xl mx-auto px-6 md:px-12">
+      <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           <h1 className="text-5xl md:text-6xl font-heading font-bold text-foreground mb-4">
             {language === 'en' ? 'About VD. Priyanka Singh' : 'Over VD. Priyanka Singh'}
@@ -15,6 +15,22 @@ const About = () => {
           <p className="text-xl text-muted-foreground">
             B.A.M.S Ayurvedic Consultant
           </p>
+        </div>
+
+        {/* Profile Image Section */}
+        <div className="flex justify-center mb-16">
+          <div className="relative">
+            <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border-4 border-primary shadow-2xl">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_priiyanka-nature/artifacts/e6g6txgb_Media.jfif" 
+                alt="VD. Priyanka Singh" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="absolute -bottom-4 -right-4 bg-accent text-accent-foreground px-6 py-3 rounded-full shadow-lg">
+              <p className="font-bold text-sm">13+ Years Experience</p>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-12">

@@ -17,12 +17,20 @@ const Footer = () => {
               VD. Priyanka Singh<br />
               B.A.M.S Ayurvedic Consultant
             </p>
-            <div className="mt-6 flex gap-4">
+            <div className="mt-6 flex gap-4 items-center">
               <div className="bg-white p-2 rounded">
-                <img src="https://via.placeholder.com/60x60/0A4F2A/FFFFFF?text=LVNT" alt="LVNT Logo" className="h-12 w-12" />
+                <img 
+                  src="https://lirp.cdn-website.com/be32551c/dms3rep/multi/opt/Logo+LVNT-definitief-640w.jpg" 
+                  alt="LVNT Logo" 
+                  className="h-12 w-auto object-contain" 
+                />
               </div>
               <div className="bg-white p-2 rounded">
-                <img src="https://via.placeholder.com/60x60/0A4F2A/FFFFFF?text=RBCZ" alt="RBCZ Logo" className="h-12 w-12" />
+                <img 
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhiU0s8MZoPsyn4CndSspNKUgY8s6ChQh-JA&s" 
+                  alt="RBCZ Logo" 
+                  className="h-12 w-auto object-contain" 
+                />
               </div>
             </div>
           </div>
