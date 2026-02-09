@@ -39,7 +39,8 @@ function AppRouter() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/complaint" element={<Complaint />} />
+        <Route path="/complaint" element={<Suggestions />} />
+        <Route path="/suggestions" element={<Suggestions />} />
       </Routes>
       <Footer />
     </>
