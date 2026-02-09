@@ -63,7 +63,7 @@ export const translations = {
       contact: 'Contact',
       privacy: 'Privacy Policy',
       terms: 'Terms & Conditions',
-      complaint: 'Complaint Procedure',
+      suggestions: 'Suggestions',
       rights: 'All rights reserved'
     }
   },
