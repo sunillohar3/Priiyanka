@@ -16,7 +16,7 @@ import Admin from './pages/Admin';
 import AuthCallback from './pages/AuthCallback';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
-import Complaint from './pages/Complaint';
+import Suggestions from './pages/Suggestions';
 import './App.css';
 
 function AppRouter() {
