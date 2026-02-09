@@ -127,7 +127,7 @@ export const translations = {
       contact: 'Contact',
       privacy: 'Privacybeleid',
       terms: 'Algemene Voorwaarden',
-      complaint: 'Klachtenprocedure',
+      suggestions: 'Suggesties',
       rights: 'Alle rechten voorbehouden'
     }
   }
