@@ -22,13 +22,11 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center gap-3" data-testid="logo-link">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-2xl text-primary-foreground font-handwriting">P</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-heading font-bold text-foreground">Priiyanka's</h1>
-              <p className="text-xs text-muted-foreground">Nature Nest</p>
-            </div>
+            <img 
+              src="https://customer-assets.emergentagent.com/job_priiyanka-nature/artifacts/4azlwkyk_Logo.png" 
+              alt="Priiyanka's Nature Nest" 
+              className="h-16 w-auto"
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

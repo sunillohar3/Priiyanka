@@ -17,7 +17,7 @@ const Footer = () => {
               VD. Priyanka Singh<br />
               B.A.M.S Ayurvedic Consultant
             </p>
-            <div className="mt-6 flex gap-4 items-center">
+            <div className="mt-6 flex flex-wrap gap-3 items-center">
               <div className="bg-white p-2 rounded">
                 <img 
                   src="https://lirp.cdn-website.com/be32551c/dms3rep/multi/opt/Logo+LVNT-definitief-640w.jpg" 
@@ -29,6 +29,13 @@ const Footer = () => {
                 <img 
                   src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhiU0s8MZoPsyn4CndSspNKUgY8s6ChQh-JA&s" 
                   alt="RBCZ Logo" 
+                  className="h-12 w-auto object-contain" 
+                />
+              </div>
+              <div className="bg-white p-2 rounded">
+                <img 
+                  src="https://salutee.nl/wp-content/uploads/2018/09/tcz-logo-e1546690810110.jpg" 
+                  alt="TCZ Logo" 
                   className="h-12 w-auto object-contain" 
                 />
               </div>
@@ -49,11 +56,12 @@ const Footer = () => {
             <div className="space-y-2 text-sm">
               <Link to="/privacy" className="block hover:text-accent transition-colors">{t('footer.privacy')}</Link>
               <Link to="/terms" className="block hover:text-accent transition-colors">{t('footer.terms')}</Link>
-              <Link to="/complaint" className="block hover:text-accent transition-colors">{t('footer.complaint')}</Link>
+              <Link to="/suggestions" className="block hover:text-accent transition-colors">{t('footer.suggestions')}</Link>
               <p className="text-primary-foreground/80 mt-4">KVK: 98872109</p>
               <p className="text-primary-foreground/80">VAT: NL005359083B24</p>
               <p className="text-primary-foreground/80 mt-2">LVNT Member</p>
               <p className="text-primary-foreground/80">RBCZ Registered</p>
+              <p className="text-primary-foreground/80">TCZ Registered</p>
             </div>
           </div>
 
