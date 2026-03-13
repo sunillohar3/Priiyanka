@@ -11,6 +11,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
+import bcrypt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -31,6 +32,7 @@ class User(BaseModel):
     email: str
     name: str
     picture: Optional[str] = None
+    password: Optional[str] = None
     role: str = "user"
     created_at: datetime
 
@@ -90,6 +92,15 @@ class BookingCreate(BaseModel):
     booking_date: str
     booking_time: str
     notes: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -230,6 +241,102 @@ async def logout(request: Request, response: Response, session_token: Optional[s
     
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully"}
+
+@api_router.post("/auth/login")
+async def login(request: Request, response: Response, login_data: LoginRequest):
+    """Login with email and password"""
+    user = await db.users.find_one({"email": login_data.email})
+    if not user or not bcrypt.checkpw(login_data.password.encode('utf-8'), user['password'].encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create session
+    session_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    session_data = UserSession(
+        user_id=user['user_id'],
+        session_token=session_token,
+        expires_at=expires_at,
+        created_at=datetime.now(timezone.utc)
+    )
+    
+    await db.user_sessions.insert_one(session_data.dict())
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=60*60*24*7  # 7 days
+    )
+    
+    return User(**user)
+
+@api_router.post("/auth/register")
+async def register(request: Request, response: Response, register_data: RegisterRequest):
+    """Register new user with email and password"""
+    existing_user = await db.users.find_one({"email": register_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
+    
+    # Hash password
+    hashed_password = bcrypt.hashpw(register_data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    user_id = str(uuid.uuid4())
+    user_data = User(
+        user_id=user_id,
+        email=register_data.email,
+        name=register_data.name,
+        role="user",
+        created_at=datetime.now(timezone.utc)
+    )
+    
+    # Add password to user data
+    user_dict = user_data.dict()
+    user_dict['password'] = hashed_password
+    
+    await db.users.insert_one(user_dict)
+    
+    # Create session
+    session_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    session_data = UserSession(
+        user_id=user_id,
+        session_token=session_token,
+        expires_at=expires_at,
+        created_at=datetime.now(timezone.utc)
+    )
+    
+    await db.user_sessions.insert_one(session_data.dict())
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=60*60*24*7  # 7 days
+    )
+    
+    return user_data
+
+@api_router.get("/auth/google/login")
+async def google_login(request: Request):
+    """Redirect to Google OAuth login"""
+    import urllib.parse
+    
+    # Get the redirect_uri from query params, default to dashboard
+    redirect_uri = request.query_params.get('redirect', '/dashboard')
+    
+    # Construct the Google OAuth URL - try /authorize endpoint
+    # URL encode the redirect_uri to handle special characters
+    encoded_redirect = urllib.parse.quote(redirect_uri, safe='')
+    auth_url = f"https://demobackend.emergentagent.com/auth/v1/env/oauth/authorize?redirect_uri={encoded_redirect}"
+    
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=auth_url, status_code=307)
 
 # ============ SERVICES ENDPOINTS ============
 

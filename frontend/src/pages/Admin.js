@@ -9,7 +9,7 @@ import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield } from 'lucide
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const Admin = () => {
   const { user } = useAuth();

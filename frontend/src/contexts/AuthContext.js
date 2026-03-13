@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -28,20 +28,45 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  const login = async (email, password) => {
+    try {
+      const response = await axios.post(`${API}/auth/login`, { email, password }, {
+        withCredentials: true
+      });
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const register = async (email, password, name) => {
+    try {
+      const response = await axios.post(`${API}/auth/register`, { email, password, name }, {
+        withCredentials: true
+      });
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`, {}, {
         withCredentials: true
       });
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
+      // Even if the API call fails, clear the local user state
       setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, checkAuth, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, checkAuth, logout, login, register }}>
       {children}
     </AuthContext.Provider>
   );

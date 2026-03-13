@@ -65,6 +65,15 @@ export const translations = {
       terms: 'Terms & Conditions',
       suggestions: 'Suggestions',
       rights: 'All rights reserved'
+    },
+    auth: {
+      login: 'Login',
+      register: 'Register',
+      email: 'Email',
+      password: 'Password',
+      name: 'Name',
+      loginDescription: 'Enter your credentials to access your account',
+      googleLogin: 'Continue with Google'
     }
   },
   nl: {
@@ -129,6 +138,15 @@ export const translations = {
       terms: 'Algemene Voorwaarden',
       suggestions: 'Suggesties',
       rights: 'Alle rechten voorbehouden'
+    },
+    auth: {
+      login: 'Inloggen',
+      register: 'Registreren',
+      email: 'E-mail',
+      password: 'Wachtwoord',
+      name: 'Naam',
+      loginDescription: 'Voer uw gegevens in om toegang te krijgen tot uw account',
+      googleLogin: 'Doorgaan met Google'
     }
   }
 };

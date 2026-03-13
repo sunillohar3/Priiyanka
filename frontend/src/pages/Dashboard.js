@@ -6,7 +6,7 @@ import { Calendar, ShoppingBag, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const Dashboard = () => {
   const { user } = useAuth();
