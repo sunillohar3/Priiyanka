@@ -63,7 +63,11 @@ app.add_middleware(
 )
 
 # Cookie security configuration
-USE_SECURE_COOKIES = os.getenv('SECURE_COOKIES', 'false').lower() == 'true'
+secure_cookie_env = os.getenv('SECURE_COOKIES')
+if secure_cookie_env is not None:
+    USE_SECURE_COOKIES = secure_cookie_env.lower() == 'true'
+else:
+    USE_SECURE_COOKIES = frontend_url.startswith('https://') and 'localhost' not in frontend_url
 COOKIE_SAMESITE = 'none' if USE_SECURE_COOKIES else 'lax'
 
 api_router = APIRouter(prefix="/api")
