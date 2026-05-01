@@ -11,12 +11,32 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
+import urllib.parse
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
+
+def normalize_mongo_url(url: str) -> str:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.username or parsed.password:
+        username = urllib.parse.quote_plus(parsed.username) if parsed.username else None
+        password = urllib.parse.quote_plus(parsed.password) if parsed.password else None
+        netloc = ''
+        if username:
+            netloc += username
+        if password is not None:
+            netloc += f':{password}'
+        if parsed.hostname:
+            netloc += f'@{parsed.hostname}'
+        if parsed.port:
+            netloc += f':{parsed.port}'
+        return urllib.parse.urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+    return url
+
+mongo_url = normalize_mongo_url(mongo_url)
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
