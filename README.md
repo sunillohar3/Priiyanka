@@ -13,7 +13,7 @@ A full-stack Ayurvedic wellness and booking platform built with React, FastAPI, 
 - **Responsive Design**: Beautiful natural/organic theme with earth tones
 
 ### User Features (Authenticated)
-- **Google OAuth Login**: Secure authentication via Emergent Auth
+- **User Authentication**: Email and password login system
 - **User Dashboard**: View bookings and orders
 - **Booking Management**: Track appointment status
 - **Order History**: Review past purchases
@@ -28,26 +28,23 @@ A full-stack Ayurvedic wellness and booking platform built with React, FastAPI, 
 ## 🚀 Quick Start
 
 ### 1. Services are Already Running
-Both frontend and backend are running via supervisor:
-- Frontend: https://priiyanka-nature.preview.emergentagent.com
-- Backend API: https://priiyanka-nature.preview.emergentagent.com/api
+Both frontend and backend are running locally.
 
 ### 2. Create Admin User
 
-**IMPORTANT**: You must first login to the website using Google OAuth before being made an admin.
+**IMPORTANT**: You must first register and login to the website using email/password before being made an admin.
 
-#### Step 1: Login via Google OAuth
-1. Go to https://priiyanka-nature.preview.emergentagent.com
+#### Step 1: Register/Login
+1. Go to http://localhost:3000
 2. Click "Inloggen" (Login) in the top right
-3. Complete Google OAuth login
-4. You'll be redirected to your dashboard
+3. Register a new account or login with existing credentials
 
 #### Step 2: Make User Admin
 After logging in, run this command:
 
 ```bash
-cd /app/backend
-python create_admin.py your-email@gmail.com
+cd backend
+python create_admin.py your-email@example.com
 ```
 
 Example:
@@ -64,7 +61,7 @@ python create_admin.py priiyankasingh87@gmail.com
 
 List all users:
 ```bash
-cd /app/backend
+cd backend
 python create_admin.py list
 ```
 
@@ -73,7 +70,7 @@ python create_admin.py list
 All 16 services are already seeded! To reseed:
 
 ```bash
-cd /app/backend
+cd backend
 python seed_data.py
 ```
 
@@ -88,7 +85,7 @@ Services include:
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 19** with React Router
+- **React 18** with React Router
 - **Tailwind CSS** with custom design system
 - **Shadcn/UI** components
 - **Lucide React** icons
@@ -99,14 +96,13 @@ Services include:
 - **FastAPI** with async/await
 - **Motor** (async MongoDB driver)
 - **Pydantic** for data validation
-- **httpx** for OAuth integration
 - **Python 3.11**
 
 ### Database
 - **MongoDB** for data storage
 
 ### Authentication
-- **Emergent Google OAuth** integration
+- **Email/Password Login**: Secure authentication with bcrypt hashing
 - Session-based auth with httpOnly cookies
 - 7-day session expiry
 
@@ -133,14 +129,12 @@ DB_NAME=test_database
 CORS_ORIGINS=*
 ```
 
+For production, set `SECURE_COOKIES=true` in your backend environment so auth cookies are sent securely over HTTPS.
+
 ### Frontend (.env)
 ```
-REACT_APP_BACKEND_URL=https://priiyanka-nature.preview.emergentagent.com
-WDS_SOCKET_PORT=443
-ENABLE_HEALTH_CHECK=false
+REACT_APP_BACKEND_URL=http://localhost:8000/api
 ```
-
-**⚠️ NEVER modify these URLs or add hardcoded values!**
 
 ## 📝 Compliance & Legal
 
@@ -171,19 +165,18 @@ ENABLE_HEALTH_CHECK=false
 
 ### Services not showing?
 ```bash
-cd /app/backend
+cd backend
 python seed_data.py
 ```
 
 ### Admin panel not accessible?
-1. Ensure you've logged in first via Google OAuth
-2. Run: `python create_admin.py your-email@gmail.com`
+1. Ensure you've logged in first using email/password
+2. Run: `python create_admin.py your-email@example.com`
 3. Refresh the page
 
 ### Auth not working?
-- Check that you're not hardcoding URLs
+- Check that you're using the correct email/password
 - Verify cookies are enabled in browser
-- See `/app/auth_testing.md` for detailed testing guide
 
 ## 📞 Support
 
@@ -192,5 +185,3 @@ For issues or questions:
 - Phone: +31 623955935
 
 ---
-
-**Built with ❤️ using Emergent AI**

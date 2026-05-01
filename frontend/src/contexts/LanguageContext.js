@@ -73,7 +73,7 @@ export const translations = {
       password: 'Password',
       name: 'Name',
       loginDescription: 'Enter your credentials to access your account',
-      googleLogin: 'Continue with Google'
+      continueLogin: 'Continue'
     }
   },
   nl: {
@@ -146,7 +146,7 @@ export const translations = {
       password: 'Wachtwoord',
       name: 'Naam',
       loginDescription: 'Voer uw gegevens in om toegang te krijgen tot uw account',
-      googleLogin: 'Doorgaan met Google'
+      continueLogin: 'Doorgaan'
     }
   }
 };

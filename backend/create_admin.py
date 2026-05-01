@@ -19,7 +19,7 @@ async def create_admin_user(email: str):
         
         if not user:
             print(f"Error: No user found with email {email}")
-            print("\nThe user must first login via Google OAuth before being made admin.")
+            print("\nThe user must first register and login with email/password before being made admin.")
             return False
         
         if user.get('role') == 'admin':
@@ -53,7 +53,7 @@ async def list_users():
         
         if not users:
             print("No users found in database.")
-            print("\nUsers must first login via Google OAuth to be registered.")
+            print("\nUsers must first register with email/password to be added to the database.")
             return
         
         print("\n=== All Users ===")
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         print("  python create_admin.py list              - List all users")
         print("\nExample:")
         print("  python create_admin.py priiyankasingh87@gmail.com")
-        print("\nNote: User must login via Google OAuth first before being made admin.\n")
+        print("\nNote: User must first register and login with email/password before being made admin.\n")
         sys.exit(1)
     
     command = sys.argv[1]

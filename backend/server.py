@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
-import httpx
 import bcrypt
 
 ROOT_DIR = Path(__file__).parent
@@ -22,9 +21,33 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
+
+# CORS middleware for production
+frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[frontend_url],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Cookie security configuration
+USE_SECURE_COOKIES = os.getenv('SECURE_COOKIES', 'false').lower() == 'true'
+COOKIE_SAMESITE = 'none' if USE_SECURE_COOKIES else 'lax'
+
 api_router = APIRouter(prefix="/api")
 
 # ============ MODELS ============
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    user_id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+    role: str = "user"
+    created_at: datetime
 
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -160,78 +183,11 @@ async def require_admin(request: Request, session_token: Optional[str] = Cookie(
 
 # ============ AUTH ENDPOINTS ============
 
-@api_router.post("/auth/session")
-async def create_session(request: Request, response: Response):
-    """Exchange session_id for user data and create session"""
-    data = await request.json()
-    session_id = data.get('session_id')
-    
-    if not session_id:
-        raise HTTPException(status_code=400, detail="session_id required")
-    
-    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    async with httpx.AsyncClient() as client:
-        response_data = await client.get(
-            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-            headers={"X-Session-ID": session_id}
-        )
-        if response_data.status_code != 200:
-            raise HTTPException(status_code=401, detail="Invalid session_id")
-        
-        user_data = response_data.json()
-    
-    user_id = f"user_{uuid.uuid4().hex[:12]}"
-    existing_user = await db.users.find_one({"email": user_data['email']}, {"_id": 0})
-    
-    if existing_user:
-        user_id = existing_user['user_id']
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$set": {
-                "name": user_data['name'],
-                "picture": user_data['picture']
-            }}
-        )
-    else:
-        user_doc = {
-            "user_id": user_id,
-            "email": user_data['email'],
-            "name": user_data['name'],
-            "picture": user_data['picture'],
-            "role": "user",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(user_doc)
-    
-    session_token = user_data['session_token']
-    session_doc = {
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.user_sessions.insert_one(session_doc)
-    
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        path="/",
-        max_age=7*24*60*60
-    )
-    
-    user_result = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    if isinstance(user_result['created_at'], str):
-        user_result['created_at'] = datetime.fromisoformat(user_result['created_at'])
-    
-    return User(**user_result)
-
-@api_router.get("/auth/me", response_model=User)
+@api_router.get("/auth/me", response_model=UserOut)
 async def get_me(request: Request, session_token: Optional[str] = Cookie(None)):
     """Get current user info"""
-    return await get_current_user(request, session_token)
+    user = await get_current_user(request, session_token)
+    return UserOut(**user.model_dump())
 
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response, session_token: Optional[str] = Cookie(None)):
@@ -242,7 +198,7 @@ async def logout(request: Request, response: Response, session_token: Optional[s
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully"}
 
-@api_router.post("/auth/login")
+@api_router.post("/auth/login", response_model=UserOut)
 async def login(request: Request, response: Response, login_data: LoginRequest):
     """Login with email and password"""
     user = await db.users.find_one({"email": login_data.email})
@@ -266,14 +222,14 @@ async def login(request: Request, response: Response, login_data: LoginRequest):
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=False,  # Set to True in production with HTTPS
-        samesite="lax",
+        secure=USE_SECURE_COOKIES,
+        samesite=COOKIE_SAMESITE,
         max_age=60*60*24*7  # 7 days
     )
     
-    return User(**user)
+    return UserOut(**user)
 
-@api_router.post("/auth/register")
+@api_router.post("/auth/register", response_model=UserOut)
 async def register(request: Request, response: Response, register_data: RegisterRequest):
     """Register new user with email and password"""
     existing_user = await db.users.find_one({"email": register_data.email})
@@ -293,7 +249,7 @@ async def register(request: Request, response: Response, register_data: Register
     )
     
     # Add password to user data
-    user_dict = user_data.dict()
+    user_dict = user_data.model_dump()
     user_dict['password'] = hashed_password
     
     await db.users.insert_one(user_dict)
@@ -315,28 +271,12 @@ async def register(request: Request, response: Response, register_data: Register
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=False,  # Set to True in production with HTTPS
-        samesite="lax",
+        secure=USE_SECURE_COOKIES,
+        samesite=COOKIE_SAMESITE,
         max_age=60*60*24*7  # 7 days
     )
     
-    return user_data
-
-@api_router.get("/auth/google/login")
-async def google_login(request: Request):
-    """Redirect to Google OAuth login"""
-    import urllib.parse
-    
-    # Get the redirect_uri from query params, default to dashboard
-    redirect_uri = request.query_params.get('redirect', '/dashboard')
-    
-    # Construct the Google OAuth URL - try /authorize endpoint
-    # URL encode the redirect_uri to handle special characters
-    encoded_redirect = urllib.parse.quote(redirect_uri, safe='')
-    auth_url = f"https://demobackend.emergentagent.com/auth/v1/env/oauth/authorize?redirect_uri={encoded_redirect}"
-    
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url=auth_url, status_code=307)
+    return UserOut(**user_data.model_dump())
 
 # ============ SERVICES ENDPOINTS ============
 
@@ -552,3 +492,8 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

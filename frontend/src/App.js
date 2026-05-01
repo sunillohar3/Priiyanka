@@ -13,7 +13,6 @@ import Contact from './pages/Contact';
 import Cart from './pages/Cart';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
-import AuthCallback from './pages/AuthCallback';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Suggestions from './pages/Suggestions';
@@ -22,10 +21,6 @@ import './App.css';
 function AppRouter() {
   const location = useLocation();
   
-  if (location.hash?.includes('session_id=')) {
-    return <AuthCallback />;
-  }
-
   return (
     <>
       <Navbar />

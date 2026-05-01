@@ -118,7 +118,7 @@ const Home = () => {
             </div>
             <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
               <img 
-                src="https://customer-assets.emergentagent.com/job_priiyanka-nature/artifacts/xt0dda6u_profile.jpg"
+                src="/assets/profile.jpg"
                 alt="VD. Priyanka Singh - Ayurvedic Consultant"
                 className="w-full h-full object-cover"
               />

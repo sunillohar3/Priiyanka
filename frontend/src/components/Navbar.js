@@ -48,23 +48,19 @@ const Navbar = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Redirect to the backend Google OAuth login endpoint
-    const redirectUrl = encodeURIComponent(`${window.location.origin}/auth/callback`);
-    // REACT_APP_BACKEND_URL already includes /api, so don't add it again
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/google/login?redirect=${redirectUrl}`;
-  };
-
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center gap-3" data-testid="logo-link">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_priiyanka-nature/artifacts/4azlwkyk_Logo.png" 
-              alt="Priiyanka's Nature Nest" 
-              className="h-16 w-auto"
+            <img
+              src="/assets/logo.png"
+              alt="Priiyanka's Nature Nest logo"
+              className="h-16 w-auto object-contain"
             />
+            <div className="text-2xl font-bold text-primary hidden sm:block">
+              Priiyanka's Nature Nest
+            </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -205,11 +201,6 @@ const Navbar = () => {
                       </form>
                     </TabsContent>
                   </Tabs>
-                  <div className="mt-4">
-                    <Button onClick={handleGoogleLogin} variant="outline" className="w-full">
-                      {t('auth.googleLogin')}
-                    </Button>
-                  </div>
                 </DialogContent>
               </Dialog>
             )}
