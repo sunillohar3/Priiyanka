@@ -8,8 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import API from '../lib/api';
 
 const Admin = () => {
   const { user } = useAuth();

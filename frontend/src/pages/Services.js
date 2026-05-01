@@ -5,8 +5,7 @@ import { ShoppingCart, Clock, Euro } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { toast } from 'sonner';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import API from '../lib/api';
 
 const Services = () => {
   const { t, language } = useLanguage();

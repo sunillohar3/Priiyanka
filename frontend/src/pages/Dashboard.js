@@ -5,8 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Calendar, ShoppingBag, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import API from '../lib/api';
 
 const Dashboard = () => {
   const { user } = useAuth();

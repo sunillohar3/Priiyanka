@@ -44,10 +44,15 @@ app = FastAPI()
 
 # CORS middleware for production
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-# Allow both localhost for development and Vercel for production
-allowed_origins = [frontend_url]
-if frontend_url == 'http://localhost:3000':
-    allowed_origins.append('https://priiyanka.vercel.app')
+allowed_origins = []
+
+cors_origins = os.getenv('CORS_ORIGINS')
+if cors_origins:
+    allowed_origins = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+else:
+    # Default to local dev plus known deployed frontend hostname
+    allowed_origins = [frontend_url, 'https://priiyanka.vercel.app']
+    allowed_origins = [origin for origin in allowed_origins if origin]
 
 app.add_middleware(
     CORSMiddleware,
@@ -499,14 +504,6 @@ async def root():
     return {"message": "Priiyanka's Nature Nest API"}
 
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 logging.basicConfig(
     level=logging.INFO,

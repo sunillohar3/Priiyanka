@@ -7,8 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import API from '../lib/api';
 
 const Cart = () => {
   const { cartItems, removeFromCart, getTotal, clearCart } = useCart();
