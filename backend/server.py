@@ -22,8 +22,8 @@ mongo_url = os.environ['MONGO_URL']
 def normalize_mongo_url(url: str) -> str:
     parsed = urllib.parse.urlparse(url)
     if parsed.username or parsed.password:
-        username = urllib.parse.quote_plus(parsed.username) if parsed.username else None
-        password = urllib.parse.quote_plus(parsed.password) if parsed.password else None
+        username = urllib.parse.quote_plus(urllib.parse.unquote_plus(parsed.username)) if parsed.username else None
+        password = urllib.parse.quote_plus(urllib.parse.unquote_plus(parsed.password)) if parsed.password else None
         netloc = ''
         if username:
             netloc += username
