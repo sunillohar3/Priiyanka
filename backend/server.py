@@ -44,9 +44,14 @@ app = FastAPI()
 
 # CORS middleware for production
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+# Allow both localhost for development and Vercel for production
+allowed_origins = [frontend_url]
+if frontend_url == 'http://localhost:3000':
+    allowed_origins.append('https://priiyanka.vercel.app')
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
