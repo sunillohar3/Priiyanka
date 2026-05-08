@@ -23,7 +23,7 @@ services_data = [
         "price": 40.00,
         "duration": 30,
         "category": "Consultation",
-        "image_url": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shirodhara.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -35,7 +35,7 @@ services_data = [
         "price": 65.00,
         "duration": 60,
         "category": "Consultation",
-        "image_url": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shirodhara.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -47,7 +47,7 @@ services_data = [
         "price": 55.00,
         "duration": 30,
         "category": "Massage",
-        "image_url": "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Abhyanga.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -59,7 +59,7 @@ services_data = [
         "price": 80.00,
         "duration": 60,
         "category": "Massage",
-        "image_url": "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Abhyanga.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -71,7 +71,7 @@ services_data = [
         "price": 100.00,
         "duration": 60,
         "category": "Panchakarma",
-        "image_url": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Dry_massage.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -83,7 +83,7 @@ services_data = [
         "price": 85.00,
         "duration": 60,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Valuka_sveda.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -95,7 +95,7 @@ services_data = [
         "price": 65.00,
         "duration": 45,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Nasya.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -107,7 +107,7 @@ services_data = [
         "price": 85.00,
         "duration": 60,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Kati_basti.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -119,7 +119,7 @@ services_data = [
         "price": 85.00,
         "duration": 60,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shiro_basti.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -131,7 +131,7 @@ services_data = [
         "price": 40.00,
         "duration": 60,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shiro_pichu.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -143,7 +143,7 @@ services_data = [
         "price": 60.00,
         "duration": 45,
         "category": "Beauty Care",
-        "image_url": "https://images.unsplash.com/photo-1522338140262-f46f5913618a?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shirodhara.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -155,7 +155,7 @@ services_data = [
         "price": 85.00,
         "duration": 60,
         "category": "Therapeutic",
-        "image_url": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Janu_basti.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -167,7 +167,7 @@ services_data = [
         "price": 65.00,
         "duration": 60,
         "category": "Panchakarma",
-        "image_url": "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Pinda_sveda.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -179,7 +179,7 @@ services_data = [
         "price": 80.00,
         "duration": 60,
         "category": "Panchakarma",
-        "image_url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Herbal_steam_bath.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -191,7 +191,7 @@ services_data = [
         "price": 80.00,
         "duration": 60,
         "category": "Beauty Care",
-        "image_url": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Shirodhara.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     },
     {
@@ -203,7 +203,79 @@ services_data = [
         "price": 100.00,
         "duration": 60,
         "category": "Panchakarma",
-        "image_url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop",
+        "image_url": "/assets/Herbal_steam_bath.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_akshi_tarpana",
+        "name_en": "Akshi Tarpana (Eye Treatment)",
+        "name_nl": "Akshi Tarpana (Oogbehandeling)",
+        "description_en": "Specialized Ayurvedic eye therapy using medicated ghee to nourish and rejuvenate the eyes, improving vision and reducing eye strain.",
+        "description_nl": "Gespecialiseerde Ayurvedische oogtherapie met medicinale ghee om de ogen te voeden en te verjongen, visie te verbeteren en oogvermoeidheid te verminderen.",
+        "price": 75.00,
+        "duration": 45,
+        "category": "Therapeutic",
+        "image_url": "/assets/Akshi.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_karna_purana",
+        "name_en": "Karna Purana (Ear Treatment)",
+        "name_nl": "Karna Purana (Oorbehandeling)",
+        "description_en": "Therapeutic ear treatment using warm medicated oils to improve hearing, reduce tinnitus, and promote ear health.",
+        "description_nl": "Therapeutische oorbehandeling met warme medicinale oliën om het gehoor te verbeteren, tinnitus te verminderen en oor gezondheid te bevorderen.",
+        "price": 50.00,
+        "duration": 30,
+        "category": "Therapeutic",
+        "image_url": "/assets/Karna_purana.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_marma_therapy",
+        "name_en": "Marma Therapy",
+        "name_nl": "Marma Therapie",
+        "description_en": "Vital point therapy targeting energy points on the body to balance prana flow, relieve pain, and promote healing.",
+        "description_nl": "Vitale punt therapie gericht op energiepunt op het lichaam om prana stroom te balanceren, pijn te verlichten en genezing te bevorderen.",
+        "price": 90.00,
+        "duration": 60,
+        "category": "Therapeutic",
+        "image_url": "/assets/Marma_therapy.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_nara_cupping",
+        "name_en": "Nara Cupping Therapy",
+        "name_nl": "Nara Cupping Therapie",
+        "description_en": "Traditional Ayurvedic cupping therapy using specialized cups to improve blood circulation, reduce muscle tension, and promote detoxification.",
+        "description_nl": "Traditionele Ayurvedische cupping therapie met gespecialiseerde kopjes om bloedcirculatie te verbeteren, spierspanning te verminderen en detoxificatie te bevorderen.",
+        "price": 70.00,
+        "duration": 45,
+        "category": "Therapeutic",
+        "image_url": "/assets/Nara_cupping.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_shakti_shali_pinda_sveda",
+        "name_en": "Shakti Shali Pinda Sveda",
+        "name_nl": "Shakti Shali Pinda Sveda",
+        "description_en": "Specialized rice bolus massage using medicinal rice cooked in herbal decoctions for deep nourishment, pain relief, and rejuvenation.",
+        "description_nl": "Gespecialiseerde rijstbolus massage met medicinale rijst gekookt in kruidenafkooksels voor diepe voeding, pijnverlichting en verjonging.",
+        "price": 95.00,
+        "duration": 75,
+        "category": "Panchakarma",
+        "image_url": "/assets/Shakti_shali_pinda_sveda.jpeg",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    },
+    {
+        "service_id": "service_takradhara",
+        "name_en": "Takradhara (Buttermilk Therapy)",
+        "name_nl": "Takradhara (Karnemelk Therapie)",
+        "description_en": "Continuous pouring of medicated buttermilk over the forehead to calm the mind, reduce stress, and treat neurological disorders.",
+        "description_nl": "Continu uitgieten van medicinale karnemelk over het voorhoofd om de geest te kalmeren, stress te verminderen en neurologische aandoeningen te behandelen.",
+        "price": 85.00,
+        "duration": 60,
+        "category": "Therapeutic",
+        "image_url": "/assets/Takradhara.jpeg",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 ]
@@ -212,17 +284,12 @@ async def seed_data():
     try:
         existing_services = await db.services.count_documents({})
         if existing_services > 0:
-            print(f"\nDatabase already has {existing_services} services.")
-            response = input("Do you want to clear and reseed? (yes/no): ")
-            if response.lower() == 'yes':
-                await db.services.delete_many({})
-                print("Cleared existing services.")
-            else:
-                print("Skipping seed.")
-                return
+            print(f"\nDatabase has {existing_services} services. Clearing and reseeding with updated list...")
+            await db.services.delete_many({})
+            print("Cleared existing services.")
         
         result = await db.services.insert_many(services_data)
-        print(f"\n✅ Successfully seeded {len(result.inserted_ids)} services!\n")
+        print(f"\nSuccessfully seeded {len(result.inserted_ids)} services!\n")
         
         print("Services added:")
         for service in services_data:

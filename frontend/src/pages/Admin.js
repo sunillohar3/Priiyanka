@@ -31,6 +31,7 @@ const Admin = () => {
     category: '',
     image_url: ''
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -92,6 +93,34 @@ const Admin = () => {
     } catch (error) {
       console.error('Error saving service:', error);
       toast.error('Failed to save service');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a valid image file.');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('file', file);
+
+    try {
+      setUploadingImage(true);
+      const uploadRes = await axios.post(`${API}/upload`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true
+      });
+      setFormData({ ...formData, image_url: uploadRes.data.url });
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      toast.error('Image upload failed');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
     }
   };
 
@@ -361,14 +390,36 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Image URL</label>
+                        <label className="block text-sm font-medium mb-2">Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                          data-testid="input-image-upload"
+                        />
+                        {uploadingImage && (
+                          <p className="text-sm text-muted-foreground mt-2">Uploading image...</p>
+                        )}
                         <Input
                           value={formData.image_url}
                           onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                          placeholder="Or paste an existing image URL"
                           data-testid="input-image-url"
+                          className="mt-2"
                         />
                       </div>
                     </div>
+                    {formData.image_url && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Image Preview</p>
+                        <img
+                          src={formData.image_url}
+                          alt="Selected service preview"
+                          className="w-full max-h-64 object-cover rounded-xl border border-border"
+                        />
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <Button type="submit" className="bg-primary text-primary-foreground" data-testid="submit-service">
                         {editingService ? 'Update' : 'Create'} Service

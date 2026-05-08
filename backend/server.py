@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request, UploadFile, File
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -41,6 +42,10 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
+
+UPLOADS_DIR = ROOT_DIR / 'uploads'
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 
 # CORS middleware for production
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -311,6 +316,42 @@ async def register(request: Request, response: Response, register_data: Register
     )
     
     return UserOut(**user_data.model_dump())
+
+@api_router.post("/upload")
+async def upload_image(request: Request, file: UploadFile = File(...), session_token: Optional[str] = Cookie(None)):
+    """Upload a service image file and return its public URL."""
+    await require_admin(request, session_token)
+
+    allowed_extensions = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+    upload_filename = Path(file.filename).name
+    extension = Path(upload_filename).suffix.lower()
+    if extension not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    dest_filename = f"{uuid.uuid4().hex}{extension}"
+    dest_path = UPLOADS_DIR / dest_filename
+
+    contents = await file.read()
+    with open(dest_path, "wb") as buffer:
+        buffer.write(contents)
+
+    host_header = request.headers.get("host") or "localhost:8000"
+    scheme = request.url.scheme
+    image_url = f"{scheme}://{host_header}/uploads/{dest_filename}"
+    return {"url": image_url}
+
+@api_router.delete("/upload/{filename}")
+async def delete_uploaded_image(filename: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete an uploaded service image file."""
+    await require_admin(request, session_token)
+
+    safe_filename = Path(filename).name
+    file_path = UPLOADS_DIR / safe_filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path.unlink()
+    return {"deleted": True, "filename": safe_filename}
 
 # ============ SERVICES ENDPOINTS ============
 

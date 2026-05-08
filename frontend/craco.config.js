@@ -1,4 +1,5 @@
 // craco.config.js
+const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 
@@ -6,10 +7,13 @@ require("dotenv").config();
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
 const isDevServer = process.env.NODE_ENV !== "production";
 
+const visualEditsPluginDir = path.join(__dirname, "plugins", "visual-edits");
+const visualEditsAvailable = fs.existsSync(visualEditsPluginDir);
+
 // Environment variable overrides
 const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
-  enableVisualEdits: isDevServer, // Only enable during dev server
+  enableVisualEdits: isDevServer && visualEditsAvailable, // Only enable when plugin is available
 };
 
 // Conditionally load visual edits modules only in dev mode

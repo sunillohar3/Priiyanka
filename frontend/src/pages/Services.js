@@ -9,7 +9,7 @@ import API from '../lib/api';
 
 const Services = () => {
   const { t, language } = useLanguage();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +36,11 @@ const Services = () => {
         ? `Added ${service.name_en} to cart` 
         : `${service.name_nl} toegevoegd aan winkelwagen`
     );
+  };
+
+  const getCartQuantity = (serviceId) => {
+    const item = cartItems.find(item => item.service_id === serviceId);
+    return item ? item.quantity : 0;
   };
 
   if (loading) {
@@ -88,11 +93,11 @@ const Services = () => {
                   <h3 className="text-2xl font-heading font-semibold text-foreground mb-2">
                     {language === 'en' ? service.name_en : service.name_nl}
                   </h3>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">
+                  <p className="text-muted-foreground mb-6 line-clamp-2">
                     {language === 'en' ? service.description_en : service.description_nl}
                   </p>
                   
-                  <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       <span>{service.duration} {t('services.minutes')}</span>
@@ -103,14 +108,21 @@ const Services = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={() => handleAddToCart(service)}
-                    className="w-full bg-primary text-primary-foreground hover:bg-secondary rounded-full"
-                    data-testid={`add-to-cart-${service.service_id}`}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    {t('services.addToCart')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      onClick={() => handleAddToCart(service)}
+                      className="flex-1 bg-primary text-primary-foreground hover:bg-secondary rounded-full"
+                      data-testid={`add-to-cart-${service.service_id}`}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      {t('services.addToCart')}
+                    </Button>
+                    {getCartQuantity(service.service_id) > 0 && (
+                      <div className="px-3 py-2 bg-secondary text-secondary-foreground rounded-full font-bold text-sm">
+                        {getCartQuantity(service.service_id)} in cart
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
