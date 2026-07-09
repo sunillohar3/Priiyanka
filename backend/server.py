@@ -55,8 +55,8 @@ cors_origins = os.getenv('CORS_ORIGINS')
 if cors_origins:
     allowed_origins = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
 else:
-    # Default to local dev plus production frontend hostname
-    allowed_origins = [frontend_url, 'https://priiyankasnaturenest.nl']
+    # Default to local dev plus production frontend hostnames
+    allowed_origins = [frontend_url, 'https://priiyankasnaturenest.nl', 'https://www.priiyankasnaturenest.nl']
     allowed_origins = [origin for origin in allowed_origins if origin]
 
 app.add_middleware(
@@ -72,7 +72,9 @@ secure_cookie_env = os.getenv('SECURE_COOKIES')
 if secure_cookie_env is not None:
     USE_SECURE_COOKIES = secure_cookie_env.lower() == 'true'
 else:
-    USE_SECURE_COOKIES = frontend_url.startswith('https://') and 'localhost' not in frontend_url
+    secure_frontend = frontend_url.startswith('https://') and 'localhost' not in frontend_url
+    secure_origin = any(origin.startswith('https://') and 'localhost' not in origin for origin in allowed_origins)
+    USE_SECURE_COOKIES = secure_frontend or secure_origin
 COOKIE_SAMESITE = 'none' if USE_SECURE_COOKIES else 'lax'
 
 api_router = APIRouter(prefix="/api")
