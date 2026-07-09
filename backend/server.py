@@ -48,7 +48,7 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 
 # CORS middleware for production
-frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+frontend_url = os.getenv('FRONTEND_URL', 'https://priiyankasnaturenest.nl')
 allowed_origins = []
 
 cors_origins = os.getenv('CORS_ORIGINS')
@@ -72,10 +72,11 @@ secure_cookie_env = os.getenv('SECURE_COOKIES')
 if secure_cookie_env is not None:
     USE_SECURE_COOKIES = secure_cookie_env.lower() == 'true'
 else:
-    secure_frontend = frontend_url.startswith('https://') and 'localhost' not in frontend_url
-    secure_origin = any(origin.startswith('https://') and 'localhost' not in origin for origin in allowed_origins)
-    USE_SECURE_COOKIES = secure_frontend or secure_origin
+    USE_SECURE_COOKIES = any(origin.startswith('https://') for origin in allowed_origins)
 COOKIE_SAMESITE = 'none' if USE_SECURE_COOKIES else 'lax'
+
+logging.info(f'Allowed CORS origins: {allowed_origins}')
+logging.info(f'Using secure cookies: {USE_SECURE_COOKIES} (SameSite={COOKIE_SAMESITE})')
 
 api_router = APIRouter(prefix="/api")
 
