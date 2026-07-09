@@ -548,6 +548,19 @@ async def update_user_role(user_id: str, role: str, request: Request, session_to
 async def root():
     return {"message": "Priiyanka's Nature Nest API"}
 
+@api_router.get("/db-status")
+async def db_status():
+    """Check MongoDB Atlas connectivity."""
+    try:
+        result = await db.command("ping")
+        return {
+            "status": "ok",
+            "message": "MongoDB Atlas connected successfully",
+            "ping": result,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"MongoDB ping failed: {e}")
+
 app.include_router(api_router)
 
 logging.basicConfig(
