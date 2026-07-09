@@ -55,8 +55,8 @@ cors_origins = os.getenv('CORS_ORIGINS')
 if cors_origins:
     allowed_origins = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
 else:
-    # Default to local dev plus known deployed frontend hostname
-    allowed_origins = [frontend_url, 'https://priiyanka.vercel.app']
+    # Default to local dev plus production frontend hostname
+    allowed_origins = [frontend_url, 'https://priiyankasnaturenest.nl']
     allowed_origins = [origin for origin in allowed_origins if origin]
 
 app.add_middleware(
