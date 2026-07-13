@@ -30,11 +30,40 @@ const Navbar = () => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
+  const [loginErrors, setLoginErrors] = useState({});
+  const [registerErrors, setRegisterErrors] = useState({});
 
   const closeMobile = () => setMobileOpen(false);
 
+  const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || '').trim());
+  const vmsg = {
+    required: language === 'en' ? 'This field is required' : 'Dit veld is verplicht',
+    email: language === 'en' ? 'Please enter a valid email address' : 'Voer een geldig e-mailadres in',
+    pwLen: language === 'en' ? 'Password must be at least 6 characters' : 'Wachtwoord moet minstens 6 tekens bevatten',
+  };
+
+  const focusFirst = (pairs, errs) => {
+    for (const [key, id] of pairs) {
+      if (errs[key]) {
+        const el = document.getElementById(id);
+        if (el) el.focus();
+        break;
+      }
+    }
+  };
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+    const errs = {};
+    if (!loginEmail.trim()) errs.email = vmsg.required;
+    else if (!isEmail(loginEmail)) errs.email = vmsg.email;
+    if (!loginPassword) errs.password = vmsg.required;
+    setLoginErrors(errs);
+    if (Object.keys(errs).length) {
+      focusFirst([['email', 'login-email'], ['password', 'login-password']], errs);
+      return;
+    }
+
     setAuthLoading(true);
     try {
       await login(loginEmail, loginPassword);
@@ -43,9 +72,10 @@ const Navbar = () => {
     } catch (error) {
       console.error('Login error:', error);
       toast.error(
-        language === 'en'
+        error?.response?.data?.detail ||
+        (language === 'en'
           ? 'Login failed. Please check your email and password.'
-          : 'Inloggen mislukt. Controleer uw e-mail en wachtwoord.'
+          : 'Inloggen mislukt. Controleer uw e-mail en wachtwoord.')
       );
     } finally {
       setAuthLoading(false);
@@ -54,6 +84,18 @@ const Navbar = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    const errs = {};
+    if (!registerName.trim()) errs.name = vmsg.required;
+    if (!registerEmail.trim()) errs.email = vmsg.required;
+    else if (!isEmail(registerEmail)) errs.email = vmsg.email;
+    if (!registerPassword) errs.password = vmsg.required;
+    else if (registerPassword.length < 6) errs.password = vmsg.pwLen;
+    setRegisterErrors(errs);
+    if (Object.keys(errs).length) {
+      focusFirst([['name', 'register-name'], ['email', 'register-email'], ['password', 'register-password']], errs);
+      return;
+    }
+
     setAuthLoading(true);
     try {
       await register(registerEmail, registerPassword, registerName);
@@ -62,9 +104,10 @@ const Navbar = () => {
     } catch (error) {
       console.error('Register error:', error);
       toast.error(
-        language === 'en'
+        error?.response?.data?.detail ||
+        (language === 'en'
           ? 'Registration failed. Please try again.'
-          : 'Registratie mislukt. Probeer het opnieuw.'
+          : 'Registratie mislukt. Probeer het opnieuw.')
       );
     } finally {
       setAuthLoading(false);
@@ -181,28 +224,44 @@ const Navbar = () => {
                       <TabsTrigger value="register">{t('auth.register')}</TabsTrigger>
                     </TabsList>
                     <TabsContent value="login">
-                      <form onSubmit={handleEmailLogin} className="space-y-4">
+                      <form onSubmit={handleEmailLogin} className="space-y-4" noValidate>
                         <div className="space-y-2">
-                          <Label htmlFor="login-email">{t('auth.email')}</Label>
+                          <Label htmlFor="login-email">
+                            {t('auth.email')} <span className="text-destructive" aria-hidden="true">*</span>
+                          </Label>
                           <Input
                             id="login-email"
                             type="email"
                             autoComplete="email"
                             value={loginEmail}
-                            onChange={(e) => setLoginEmail(e.target.value)}
+                            onChange={(e) => { setLoginEmail(e.target.value); if (loginErrors.email) setLoginErrors((p) => ({ ...p, email: undefined })); }}
                             required
+                            aria-required="true"
+                            aria-invalid={loginErrors.email ? 'true' : undefined}
+                            aria-describedby={loginErrors.email ? 'login-email-error' : undefined}
                           />
+                          {loginErrors.email && (
+                            <p id="login-email-error" role="alert" className="text-sm text-destructive">{loginErrors.email}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="login-password">{t('auth.password')}</Label>
+                          <Label htmlFor="login-password">
+                            {t('auth.password')} <span className="text-destructive" aria-hidden="true">*</span>
+                          </Label>
                           <Input
                             id="login-password"
                             type="password"
                             autoComplete="current-password"
                             value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
+                            onChange={(e) => { setLoginPassword(e.target.value); if (loginErrors.password) setLoginErrors((p) => ({ ...p, password: undefined })); }}
                             required
+                            aria-required="true"
+                            aria-invalid={loginErrors.password ? 'true' : undefined}
+                            aria-describedby={loginErrors.password ? 'login-password-error' : undefined}
                           />
+                          {loginErrors.password && (
+                            <p id="login-password-error" role="alert" className="text-sm text-destructive">{loginErrors.password}</p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={authLoading}>
                           {authLoading ? (
@@ -217,38 +276,66 @@ const Navbar = () => {
                       </form>
                     </TabsContent>
                     <TabsContent value="register">
-                      <form onSubmit={handleRegister} className="space-y-4">
+                      <form onSubmit={handleRegister} className="space-y-4" noValidate>
                         <div className="space-y-2">
-                          <Label htmlFor="register-name">{t('auth.name')}</Label>
+                          <Label htmlFor="register-name">
+                            {t('auth.name')} <span className="text-destructive" aria-hidden="true">*</span>
+                          </Label>
                           <Input
                             id="register-name"
                             autoComplete="name"
                             value={registerName}
-                            onChange={(e) => setRegisterName(e.target.value)}
+                            onChange={(e) => { setRegisterName(e.target.value); if (registerErrors.name) setRegisterErrors((p) => ({ ...p, name: undefined })); }}
                             required
+                            aria-required="true"
+                            aria-invalid={registerErrors.name ? 'true' : undefined}
+                            aria-describedby={registerErrors.name ? 'register-name-error' : undefined}
                           />
+                          {registerErrors.name && (
+                            <p id="register-name-error" role="alert" className="text-sm text-destructive">{registerErrors.name}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="register-email">{t('auth.email')}</Label>
+                          <Label htmlFor="register-email">
+                            {t('auth.email')} <span className="text-destructive" aria-hidden="true">*</span>
+                          </Label>
                           <Input
                             id="register-email"
                             type="email"
                             autoComplete="email"
                             value={registerEmail}
-                            onChange={(e) => setRegisterEmail(e.target.value)}
+                            onChange={(e) => { setRegisterEmail(e.target.value); if (registerErrors.email) setRegisterErrors((p) => ({ ...p, email: undefined })); }}
                             required
+                            aria-required="true"
+                            aria-invalid={registerErrors.email ? 'true' : undefined}
+                            aria-describedby={registerErrors.email ? 'register-email-error' : undefined}
                           />
+                          {registerErrors.email && (
+                            <p id="register-email-error" role="alert" className="text-sm text-destructive">{registerErrors.email}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="register-password">{t('auth.password')}</Label>
+                          <Label htmlFor="register-password">
+                            {t('auth.password')} <span className="text-destructive" aria-hidden="true">*</span>
+                          </Label>
                           <Input
                             id="register-password"
                             type="password"
                             autoComplete="new-password"
                             value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            onChange={(e) => { setRegisterPassword(e.target.value); if (registerErrors.password) setRegisterErrors((p) => ({ ...p, password: undefined })); }}
                             required
+                            aria-required="true"
+                            aria-invalid={registerErrors.password ? 'true' : undefined}
+                            aria-describedby={registerErrors.password ? 'register-password-error' : 'register-password-hint'}
                           />
+                          {registerErrors.password ? (
+                            <p id="register-password-error" role="alert" className="text-sm text-destructive">{registerErrors.password}</p>
+                          ) : (
+                            <p id="register-password-hint" className="text-xs text-muted-foreground">
+                              {language === 'en' ? 'At least 6 characters' : 'Minstens 6 tekens'}
+                            </p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={authLoading}>
                           {authLoading ? (

@@ -218,6 +218,18 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`${API}/admin/users/${userId}`, { withCredentials: true });
+      toast.success('User deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error(error?.response?.data?.detail || 'Failed to delete user');
+    }
+  };
+
   const handleUpdateUserRole = async (userId, role) => {
     try {
       await axios.put(
@@ -666,6 +678,17 @@ const Admin = () => {
                             <option value="user">👤 User</option>
                             <option value="admin">👑 Admin</option>
                           </select>
+                          {u.user_id !== user.user_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteUser(u.user_id, u.name)}
+                              aria-label={`Delete user ${u.name}`}
+                              data-testid={`delete-user-${u.user_id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

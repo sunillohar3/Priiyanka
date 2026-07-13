@@ -9,7 +9,10 @@ import json
 import logging
 import smtplib
 import ssl
+import time
+import threading
 import http.client
+from collections import defaultdict, deque
 from email.message import EmailMessage
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -176,6 +179,39 @@ def send_email(to_address: str, subject: str, body: str) -> None:
         logging.error(f"[email] Failed to send '{subject}' to {to_address}: {e}")
 
 
+# ============ RATE LIMITING ============
+# Lightweight in-memory sliding-window limiter (single Render instance, so no
+# external store needed). Buckets reset on restart, which is fine for abuse control.
+_rate_lock = threading.Lock()
+_rate_buckets = defaultdict(deque)  # "name:ip" -> deque[timestamps]
+
+
+def _client_ip(request: Request) -> str:
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def rate_limit(request: Request, name: str, max_requests: int, window_seconds: int):
+    """Raise HTTP 429 if this IP exceeded max_requests within the window."""
+    key = f"{name}:{_client_ip(request)}"
+    now = time.time()
+    cutoff = now - window_seconds
+    with _rate_lock:
+        bucket = _rate_buckets[key]
+        while bucket and bucket[0] < cutoff:
+            bucket.popleft()
+        if len(bucket) >= max_requests:
+            retry_after = int(bucket[0] + window_seconds - now) + 1
+            raise HTTPException(
+                status_code=429,
+                detail="Too many requests. Please wait a moment and try again.",
+                headers={"Retry-After": str(max(retry_after, 1))},
+            )
+        bucket.append(now)
+
+
 api_router = APIRouter(prefix="/api")
 
 # ============ MODELS ============
@@ -261,9 +297,9 @@ class LoginRequest(BaseModel):
     password: str
 
 class RegisterRequest(BaseModel):
-    email: str
-    password: str
-    name: str
+    email: str = Field(..., min_length=3, max_length=200)
+    password: str = Field(..., min_length=6, max_length=200)
+    name: str = Field(..., min_length=1, max_length=120)
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -380,6 +416,7 @@ async def login(request: Request, response: Response, login_data: LoginRequest):
     """Login with email and password. Returns the user plus a session token
     (also set as an httpOnly cookie) so the client can use either cookie- or
     header-based auth."""
+    rate_limit(request, "login", max_requests=10, window_seconds=300)
     user = await db.users.find_one({"email": login_data.email})
     if not user or not bcrypt.checkpw(login_data.password.encode('utf-8'), user['password'].encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -413,6 +450,7 @@ async def login(request: Request, response: Response, login_data: LoginRequest):
 @api_router.post("/auth/register")
 async def register(request: Request, response: Response, register_data: RegisterRequest):
     """Register new user with email and password"""
+    rate_limit(request, "register", max_requests=5, window_seconds=900)
     existing_user = await db.users.find_one({"email": register_data.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
@@ -884,11 +922,26 @@ async def update_user_role(user_id: str, role: str, request: Request, session_to
     
     return {"message": "User role updated"}
 
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete a user and their sessions (admin only). Cannot delete yourself."""
+    admin = await require_admin(request, session_token)
+    if admin.user_id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+
+    result = await db.users.delete_one({"user_id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.user_sessions.delete_many({"user_id": user_id})
+    return {"deleted": True, "user_id": user_id}
+
 # ============ CONTACT ENDPOINTS ============
 
 @api_router.post("/contact", response_model=ContactMessage)
-async def create_contact_message(contact_data: ContactCreate, background_tasks: BackgroundTasks):
+async def create_contact_message(contact_data: ContactCreate, request: Request, background_tasks: BackgroundTasks):
     """Submit a contact / inquiry message (public)."""
+    rate_limit(request, "contact", max_requests=5, window_seconds=900)
     email = contact_data.email.strip()
     if "@" not in email or "." not in email.split("@")[-1]:
         raise HTTPException(status_code=400, detail="Invalid email address")

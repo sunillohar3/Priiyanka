@@ -38,7 +38,8 @@ const Contact = () => {
       setForm({ name: '', email: '', phone: '', subject: '', message: '' });
     } catch (error) {
       console.error('Contact submit error:', error);
-      toast.error(t('contact.formError'));
+      const detail = error?.response?.data?.detail;
+      toast.error(detail || t('contact.formError'));
     } finally {
       setSubmitting(false);
     }
