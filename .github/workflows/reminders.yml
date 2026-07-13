@@ -1,0 +1,22 @@
+name: Send appointment reminders
+
+# Calls the backend once a day to email reminders for tomorrow's appointments.
+# Requires: a repo secret CRON_SECRET that matches the CRON_SECRET env var on Render.
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily (~10:00 Europe/Amsterdam in summer)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reminders
+        run: |
+          curl -fsS -X POST "https://priiyanka.onrender.com/api/internal/send-reminders" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            --max-time 120

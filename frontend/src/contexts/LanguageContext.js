@@ -174,7 +174,15 @@ export const translations = {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('nl');
+  const [language, setLanguageState] = useState(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('language') : null;
+    return saved === 'en' || saved === 'nl' ? saved : 'en';
+  });
+
+  const setLanguage = (lang) => {
+    setLanguageState(lang);
+    try { localStorage.setItem('language', lang); } catch (e) { /* ignore */ }
+  };
 
   useEffect(() => {
     document.documentElement.lang = language;

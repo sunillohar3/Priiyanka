@@ -21,6 +21,8 @@ const Admin = () => {
   const [messages, setMessages] = useState([]);
   const [messageFilter, setMessageFilter] = useState('all');
   const [appointmentFilter, setAppointmentFilter] = useState('all');
+  const [blockedSlots, setBlockedSlots] = useState([]);
+  const [blockForm, setBlockForm] = useState({ date: '', start_time: '', end_time: '', reason: '' });
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
@@ -50,7 +52,8 @@ const Admin = () => {
       { label: 'services', url: `${API}/services`, set: setServices },
       { label: 'appointments', url: `${API}/appointments`, set: setAppointments },
       { label: 'users', url: `${API}/admin/users`, set: setUsers },
-      { label: 'messages', url: `${API}/admin/contact`, set: setMessages }
+      { label: 'messages', url: `${API}/admin/contact`, set: setMessages },
+      { label: 'availability', url: `${API}/admin/blocked-slots`, set: setBlockedSlots }
     ];
 
     const results = await Promise.allSettled(
@@ -176,6 +179,39 @@ const Admin = () => {
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast.error('Failed to update appointment');
+    }
+  };
+
+  const handleAddBlock = async (e) => {
+    e.preventDefault();
+    if (!blockForm.date) {
+      toast.error('Please choose a date to block');
+      return;
+    }
+    try {
+      await axios.post(`${API}/admin/blocked-slots`, {
+        date: blockForm.date,
+        start_time: blockForm.start_time || null,
+        end_time: blockForm.end_time || null,
+        reason: blockForm.reason || null,
+      }, { withCredentials: true });
+      toast.success('Blocked time added');
+      setBlockForm({ date: '', start_time: '', end_time: '', reason: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Error adding blocked slot:', error);
+      toast.error('Failed to add blocked time');
+    }
+  };
+
+  const handleDeleteBlock = async (blockId) => {
+    try {
+      await axios.delete(`${API}/admin/blocked-slots/${blockId}`, { withCredentials: true });
+      toast.success('Removed');
+      fetchData();
+    } catch (error) {
+      console.error('Error removing blocked slot:', error);
+      toast.error('Failed to remove');
     }
   };
 
@@ -354,6 +390,17 @@ const Admin = () => {
               data-testid="tab-appointments"
             >
               Appointments
+            </button>
+            <button
+              onClick={() => setActiveTab('availability')}
+              className={`px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'availability'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-availability"
+            >
+              Availability
             </button>
             <button
               onClick={() => setActiveTab('users')}
@@ -635,6 +682,55 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'availability' && (
+              <div>
+                <h2 className="text-2xl font-heading font-semibold text-foreground mb-2">Availability</h2>
+                <p className="text-muted-foreground mb-6 text-sm">
+                  Block a whole day (leave the times empty) or a time range within a day. Clients can't book blocked times.
+                  Regular opening hours (Mon–Fri 13:00–18:00, Sat 10:00–13:00) are always enforced automatically.
+                </p>
+                <form onSubmit={handleAddBlock} className="bg-muted p-6 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" data-testid="block-form">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Date</label>
+                    <Input type="date" value={blockForm.date} onChange={(e) => setBlockForm({ ...blockForm, date: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">From (optional)</label>
+                    <Input type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">To (optional)</label>
+                    <Input type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Reason (optional)</label>
+                    <Input value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} placeholder="e.g. Holiday" />
+                  </div>
+                  <Button type="submit" className="bg-primary text-primary-foreground">Add block</Button>
+                </form>
+                {blockedSlots.length === 0 ? (
+                  <p className="text-muted-foreground">No blocked times.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {blockedSlots.map((b) => (
+                      <div key={b.block_id} className="border border-border rounded-xl p-4 flex items-center justify-between" data-testid={`block-${b.block_id}`}>
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {b.date}
+                            {b.start_time && b.end_time ? ` · ${b.start_time}–${b.end_time}` : ' · Whole day'}
+                          </p>
+                          {b.reason && <p className="text-sm text-muted-foreground">{b.reason}</p>}
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBlock(b.block_id)} aria-label="Remove blocked time" data-testid={`delete-block-${b.block_id}`}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

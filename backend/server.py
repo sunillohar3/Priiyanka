@@ -1,6 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request, UploadFile, File, BackgroundTasks
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -50,10 +49,6 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
-
-UPLOADS_DIR = ROOT_DIR / 'uploads'
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 
 # CORS middleware for production
 frontend_url = os.getenv('FRONTEND_URL', 'https://priiyankasnaturenest.nl')
@@ -109,6 +104,23 @@ SMTP_PASSWORD = _clean(os.getenv('SMTP_PASSWORD'))
 SMTP_FROM = _clean(os.getenv('SMTP_FROM') or os.getenv('SENDER_EMAIL') or SMTP_USER)
 # Where contact-form / new-booking notifications are sent (the practitioner):
 ADMIN_NOTIFY_EMAIL = _clean(os.getenv('ADMIN_NOTIFY_EMAIL', 'priiyankasingh87@gmail.com'))
+
+# Shared secret guarding the reminders cron endpoint.
+CRON_SECRET = _clean(os.getenv('CRON_SECRET'))
+
+# Public site base URL (for links in emails). Reuses the CORS frontend_url.
+SITE_URL = frontend_url
+
+# Practitioner working hours per weekday (Mon=0 .. Sun=6), in minutes from midnight.
+# Matches the Contact page: Mon-Fri 13:00-18:00, Sat 10:00-13:00, Sun closed.
+WORKING_HOURS = {
+    0: (13 * 60, 18 * 60),
+    1: (13 * 60, 18 * 60),
+    2: (13 * 60, 18 * 60),
+    3: (13 * 60, 18 * 60),
+    4: (13 * 60, 18 * 60),
+    5: (10 * 60, 13 * 60),
+}
 
 
 def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
@@ -223,6 +235,7 @@ class UserOut(BaseModel):
     name: str
     picture: Optional[str] = None
     role: str = "user"
+    email_verified: bool = False
     created_at: datetime
 
 class User(BaseModel):
@@ -233,6 +246,7 @@ class User(BaseModel):
     picture: Optional[str] = None
     password: Optional[str] = None
     role: str = "user"
+    email_verified: bool = False
     created_at: datetime
 
 class UserSession(BaseModel):
@@ -275,23 +289,6 @@ class ServiceUpdate(BaseModel):
     category: Optional[str] = None
     image_url: Optional[str] = None
 
-class Booking(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    booking_id: str
-    user_id: str
-    service_id: str
-    booking_date: str
-    booking_time: str
-    status: str
-    notes: Optional[str] = None
-    created_at: datetime
-
-class BookingCreate(BaseModel):
-    service_id: str
-    booking_date: str
-    booking_time: str
-    notes: Optional[str] = None
-
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -300,19 +297,6 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=200)
     password: str = Field(..., min_length=6, max_length=200)
     name: str = Field(..., min_length=1, max_length=120)
-
-class Order(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    order_id: str
-    user_id: str
-    items: List[dict]
-    total_amount: float
-    status: str
-    created_at: datetime
-
-class OrderCreate(BaseModel):
-    items: List[dict]
-    total_amount: float
 
 class ContactMessage(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -350,6 +334,35 @@ class AppointmentCreate(BaseModel):
     booking_date: str
     booking_time: str
     notes: Optional[str] = None
+
+class RescheduleRequest(BaseModel):
+    booking_date: str
+    booking_time: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=200)
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=6, max_length=200)
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+class BlockedSlot(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    block_id: str
+    date: str
+    start_time: Optional[str] = None   # None = whole day blocked
+    end_time: Optional[str] = None
+    reason: Optional[str] = None
+    created_at: datetime
+
+class BlockedSlotCreate(BaseModel):
+    date: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    reason: Optional[str] = None
 
 # ============ AUTH HELPER ============
 
@@ -447,8 +460,27 @@ async def login(request: Request, response: Response, login_data: LoginRequest):
     result["session_token"] = session_token
     return result
 
+async def _create_and_send_verification(user_id: str, email: str, name: str, background_tasks: BackgroundTasks):
+    token = uuid.uuid4().hex + uuid.uuid4().hex
+    await db.email_verifications.insert_one({
+        "token": token,
+        "user_id": user_id,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    link = f"{SITE_URL}/verify-email?token={token}"
+    background_tasks.add_task(
+        send_email,
+        email,
+        "Verify your email - Priiyanka's Nature Nest",
+        f"Dear {name},\n\nPlease confirm your email address by opening this link:\n{link}\n\n"
+        f"This link expires in 48 hours. If you didn't create an account, you can ignore this email."
+    )
+
+
 @api_router.post("/auth/register")
-async def register(request: Request, response: Response, register_data: RegisterRequest):
+async def register(request: Request, response: Response, register_data: RegisterRequest, background_tasks: BackgroundTasks):
     """Register new user with email and password"""
     rate_limit(request, "register", max_requests=5, window_seconds=900)
     existing_user = await db.users.find_one({"email": register_data.email})
@@ -495,9 +527,85 @@ async def register(request: Request, response: Response, register_data: Register
         max_age=60*60*24*7  # 7 days
     )
 
+    await _create_and_send_verification(user_id, register_data.email, register_data.name, background_tasks)
+
     result = UserOut(**user_data.model_dump()).model_dump()
     result["session_token"] = session_token
     return result
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks):
+    """Start a password reset. Always returns success (no account enumeration)."""
+    rate_limit(request, "forgot", max_requests=5, window_seconds=900)
+    user = await db.users.find_one({"email": data.email.strip()})
+    if user:
+        token = uuid.uuid4().hex + uuid.uuid4().hex
+        await db.password_resets.insert_one({
+            "token": token,
+            "user_id": user["user_id"],
+            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+            "used": False,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        link = f"{SITE_URL}/reset-password?token={token}"
+        background_tasks.add_task(
+            send_email,
+            user["email"],
+            "Reset your password - Priiyanka's Nature Nest",
+            f"Dear {user.get('name', '')},\n\nWe received a request to reset your password. "
+            f"Open this link to set a new one (valid for 1 hour):\n{link}\n\n"
+            f"If you didn't request this, you can ignore this email."
+        )
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """Complete a password reset using the emailed token."""
+    doc = await db.password_resets.find_one({"token": data.token})
+    if not doc or doc.get("used"):
+        raise HTTPException(status_code=400, detail="This reset link is invalid or has already been used.")
+    expires_at = doc["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="This reset link has expired. Please request a new one.")
+
+    hashed = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    await db.users.update_one({"user_id": doc["user_id"]}, {"$set": {"password": hashed}})
+    await db.password_resets.update_one({"token": data.token}, {"$set": {"used": True}})
+    # Invalidate existing sessions so old ones can't be used after a reset.
+    await db.user_sessions.delete_many({"user_id": doc["user_id"]})
+    return {"message": "Your password has been updated. You can now log in."}
+
+@api_router.post("/auth/verify-email")
+async def verify_email(data: VerifyEmailRequest):
+    """Confirm an email address using the emailed verification token."""
+    doc = await db.email_verifications.find_one({"token": data.token})
+    if not doc or doc.get("used"):
+        raise HTTPException(status_code=400, detail="This verification link is invalid or has already been used.")
+    expires_at = doc["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="This verification link has expired. Please request a new one.")
+
+    await db.users.update_one({"user_id": doc["user_id"]}, {"$set": {"email_verified": True}})
+    await db.email_verifications.update_one({"token": data.token}, {"$set": {"used": True}})
+    return {"message": "Your email has been verified. Thank you!"}
+
+@api_router.post("/auth/resend-verification")
+async def resend_verification(request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
+    """Resend the verification email to the logged-in user."""
+    rate_limit(request, "resend-verify", max_requests=3, window_seconds=900)
+    user = await get_current_user(request, session_token)
+    if user.email_verified:
+        return {"message": "Your email is already verified."}
+    await _create_and_send_verification(user.user_id, user.email, user.name, background_tasks)
+    return {"message": "Verification email sent."}
 
 CONTENT_TYPE_BY_EXT = {
     ".png": "image/png",
@@ -646,124 +754,6 @@ async def delete_service(service_id: str, request: Request, session_token: Optio
     
     return {"message": "Service deleted successfully"}
 
-# ============ BOOKINGS ENDPOINTS ============
-
-@api_router.get("/bookings", response_model=List[Booking])
-async def get_bookings(request: Request, session_token: Optional[str] = Cookie(None)):
-    """Get user bookings"""
-    user = await get_current_user(request, session_token)
-    
-    if user.role == "admin":
-        bookings = await db.bookings.find({}, {"_id": 0}).to_list(1000)
-    else:
-        bookings = await db.bookings.find({"user_id": user.user_id}, {"_id": 0}).to_list(1000)
-    
-    for booking in bookings:
-        if isinstance(booking['created_at'], str):
-            booking['created_at'] = datetime.fromisoformat(booking['created_at'])
-    return bookings
-
-@api_router.post("/bookings", response_model=Booking)
-async def create_booking(booking_data: BookingCreate, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
-    """Create booking (rejects a slot that is already taken)."""
-    user = await get_current_user(request, session_token)
-
-    # Prevent double-booking: same date + time not already reserved (unless cancelled).
-    existing = await db.bookings.find_one({
-        "booking_date": booking_data.booking_date,
-        "booking_time": booking_data.booking_time,
-        "status": {"$ne": "cancelled"}
-    })
-    if existing:
-        raise HTTPException(
-            status_code=409,
-            detail="That time slot is already booked. Please choose another time."
-        )
-
-    booking_id = f"booking_{uuid.uuid4().hex[:12]}"
-    booking_doc = {
-        "booking_id": booking_id,
-        "user_id": user.user_id,
-        **booking_data.model_dump(),
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.bookings.insert_one(booking_doc)
-
-    result = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
-    result['created_at'] = datetime.fromisoformat(result['created_at'])
-
-    # Notify practitioner + confirm to client (best-effort, off the request path).
-    when = f"{booking_data.booking_date} at {booking_data.booking_time}"
-    background_tasks.add_task(
-        send_email,
-        ADMIN_NOTIFY_EMAIL,
-        "New booking request",
-        f"New booking from {user.name} ({user.email}).\n"
-        f"Service ID: {booking_data.service_id}\nWhen: {when}\n"
-        f"Notes: {booking_data.notes or '-'}"
-    )
-    background_tasks.add_task(
-        send_email,
-        user.email,
-        "Your appointment request - Priiyanka's Nature Nest",
-        f"Dear {user.name},\n\nWe have received your appointment request for {when}.\n"
-        f"We will confirm it shortly.\n\nWarm regards,\nPriiyanka's Nature Nest"
-    )
-
-    return Booking(**result)
-
-@api_router.put("/bookings/{booking_id}")
-async def update_booking_status(booking_id: str, status: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    """Update booking status (admin only)"""
-    await require_admin(request, session_token)
-    
-    result = await db.bookings.update_one(
-        {"booking_id": booking_id},
-        {"$set": {"status": status}}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    
-    return {"message": "Booking status updated"}
-
-# ============ ORDERS ENDPOINTS ============
-
-@api_router.get("/orders", response_model=List[Order])
-async def get_orders(request: Request, session_token: Optional[str] = Cookie(None)):
-    """Get user orders"""
-    user = await get_current_user(request, session_token)
-    
-    if user.role == "admin":
-        orders = await db.orders.find({}, {"_id": 0}).to_list(1000)
-    else:
-        orders = await db.orders.find({"user_id": user.user_id}, {"_id": 0}).to_list(1000)
-    
-    for order in orders:
-        if isinstance(order['created_at'], str):
-            order['created_at'] = datetime.fromisoformat(order['created_at'])
-    return orders
-
-@api_router.post("/orders", response_model=Order)
-async def create_order(order_data: OrderCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    """Create order"""
-    user = await get_current_user(request, session_token)
-    
-    order_id = f"order_{uuid.uuid4().hex[:12]}"
-    order_doc = {
-        "order_id": order_id,
-        "user_id": user.user_id,
-        **order_data.model_dump(),
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.orders.insert_one(order_doc)
-    
-    result = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
-    result['created_at'] = datetime.fromisoformat(result['created_at'])
-    return Order(**result)
-
 # ============ APPOINTMENTS ENDPOINTS ============
 # An appointment is a single visit that may include one or more treatments,
 # booked for one date/time. This replaces the separate "orders" + "bookings"
@@ -776,6 +766,57 @@ def _time_to_minutes(value: str):
         return int(parts[0]) * 60 + int(parts[1])
     except Exception:
         return None
+
+
+def _hours_problem(date_str: str, time_str: str, duration: int):
+    """Pure check against working hours. Returns an error message or None.
+    Kept dependency-free (no DB) so it can be unit-tested."""
+    start = _time_to_minutes(time_str)
+    if start is None:
+        return "Please provide a valid time."
+    try:
+        weekday = datetime.strptime(date_str, "%Y-%m-%d").weekday()
+    except Exception:
+        return "Please provide a valid date."
+    hours = WORKING_HOURS.get(weekday)
+    if not hours:
+        return "We are closed on the selected day. Please choose another date."
+    open_m, close_m = hours
+    if start < open_m or (start + duration) > close_m:
+        oh = f"{open_m // 60:02d}:{open_m % 60:02d}-{close_m // 60:02d}:{close_m % 60:02d}"
+        return f"Please choose a time within our opening hours ({oh})."
+    return None
+
+
+async def _slot_conflict(date_str: str, time_str: str, duration: int, exclude_id: str = None):
+    """Return an error message if the requested visit is outside working hours,
+    inside a blocked slot, or overlaps another appointment; else None."""
+    problem = _hours_problem(date_str, time_str, duration)
+    if problem:
+        return problem
+
+    start = _time_to_minutes(time_str)
+    end = start + duration
+
+    # Admin-blocked slots (whole-day, or a time range).
+    for s in await db.blocked_slots.find({"date": date_str}, {"_id": 0}).to_list(1000):
+        st = _time_to_minutes(s.get("start_time")) if s.get("start_time") else None
+        et = _time_to_minutes(s.get("end_time")) if s.get("end_time") else None
+        if st is None or et is None or (start < et and st < end):
+            return "That time is unavailable. Please choose another."
+
+    # Overlap with existing (non-cancelled) appointments.
+    for a in await db.appointments.find({"booking_date": date_str, "status": {"$ne": "cancelled"}}, {"_id": 0}).to_list(1000):
+        if exclude_id and a.get("appointment_id") == exclude_id:
+            continue
+        s2 = _time_to_minutes(a.get("booking_time", ""))
+        if s2 is None:
+            continue
+        e2 = s2 + int(a.get("total_duration", 0) or 0)
+        if start < e2 and s2 < end:
+            return "That time overlaps an existing appointment. Please choose another time."
+
+    return None
 
 @api_router.get("/appointments", response_model=List[Appointment])
 async def get_appointments(request: Request, session_token: Optional[str] = Cookie(None)):
@@ -802,25 +843,10 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
     total_amount = round(sum(float(i.get("price", 0)) for i in data.items), 2)
     total_duration = sum(int(i.get("duration", 0) or 0) for i in data.items)
 
-    # Overlap-aware conflict check: the requested visit occupies
-    # [start, start + total_duration]; reject if it overlaps a live appointment.
-    new_start = _time_to_minutes(data.booking_time)
-    if new_start is not None:
-        new_end = new_start + total_duration
-        same_day = await db.appointments.find(
-            {"booking_date": data.booking_date, "status": {"$ne": "cancelled"}},
-            {"_id": 0}
-        ).to_list(1000)
-        for appt in same_day:
-            s = _time_to_minutes(appt.get("booking_time", ""))
-            if s is None:
-                continue
-            e = s + int(appt.get("total_duration", 0) or 0)
-            if new_start < e and s < new_end:
-                raise HTTPException(
-                    status_code=409,
-                    detail="That time overlaps an existing appointment. Please choose another time."
-                )
+    # Enforce working hours, admin blocks, and no overlap.
+    conflict = await _slot_conflict(data.booking_date, data.booking_time, total_duration)
+    if conflict:
+        raise HTTPException(status_code=409, detail=conflict)
 
     appointment_id = f"appt_{uuid.uuid4().hex[:12]}"
     appointment_doc = {
@@ -890,6 +916,131 @@ async def delete_appointment(appointment_id: str, request: Request, session_toke
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     return {"deleted": True, "appointment_id": appointment_id}
+
+@api_router.post("/appointments/{appointment_id}/cancel")
+async def cancel_appointment(appointment_id: str, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
+    """Cancel an appointment (owner or admin)."""
+    user = await get_current_user(request, session_token)
+    appt = await db.appointments.find_one({"appointment_id": appointment_id}, {"_id": 0})
+    if not appt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    if appt["user_id"] != user.user_id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not allowed")
+    if appt["status"] in ("cancelled", "completed"):
+        raise HTTPException(status_code=400, detail="This appointment can no longer be cancelled.")
+
+    await db.appointments.update_one({"appointment_id": appointment_id}, {"$set": {"status": "cancelled"}})
+    background_tasks.add_task(
+        send_email,
+        ADMIN_NOTIFY_EMAIL,
+        "Appointment cancelled",
+        f"{user.name} ({user.email}) cancelled the appointment on {appt['booking_date']} at {appt['booking_time']}."
+    )
+    return {"message": "Appointment cancelled"}
+
+@api_router.put("/appointments/{appointment_id}/reschedule")
+async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
+    """Move an appointment to a new date/time (owner or admin), re-checking availability."""
+    user = await get_current_user(request, session_token)
+    appt = await db.appointments.find_one({"appointment_id": appointment_id}, {"_id": 0})
+    if not appt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    if appt["user_id"] != user.user_id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not allowed")
+    if appt["status"] in ("cancelled", "completed"):
+        raise HTTPException(status_code=400, detail="This appointment can no longer be rescheduled.")
+
+    conflict = await _slot_conflict(
+        data.booking_date, data.booking_time,
+        int(appt.get("total_duration", 0) or 0),
+        exclude_id=appointment_id
+    )
+    if conflict:
+        raise HTTPException(status_code=409, detail=conflict)
+
+    await db.appointments.update_one(
+        {"appointment_id": appointment_id},
+        {"$set": {"booking_date": data.booking_date, "booking_time": data.booking_time, "status": "pending"}}
+    )
+    background_tasks.add_task(
+        send_email,
+        ADMIN_NOTIFY_EMAIL,
+        "Appointment rescheduled",
+        f"{user.name} ({user.email}) moved their appointment to {data.booking_date} at {data.booking_time}."
+    )
+    return {"message": "Appointment rescheduled"}
+
+# ============ AVAILABILITY (BLOCKED SLOTS) ENDPOINTS ============
+
+@api_router.get("/admin/blocked-slots", response_model=List[BlockedSlot])
+async def get_blocked_slots(request: Request, session_token: Optional[str] = Cookie(None)):
+    """List blocked slots, upcoming first (admin only)."""
+    await require_admin(request, session_token)
+    slots = await db.blocked_slots.find({}, {"_id": 0}).sort("date", 1).to_list(1000)
+    for s in slots:
+        if isinstance(s['created_at'], str):
+            s['created_at'] = datetime.fromisoformat(s['created_at'])
+    return slots
+
+@api_router.post("/admin/blocked-slots", response_model=BlockedSlot)
+async def create_blocked_slot(data: BlockedSlotCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Block a date (whole day) or a time range within a date (admin only)."""
+    await require_admin(request, session_token)
+    if not data.date:
+        raise HTTPException(status_code=400, detail="A date is required")
+
+    block_id = f"block_{uuid.uuid4().hex[:12]}"
+    doc = {
+        "block_id": block_id,
+        "date": data.date,
+        "start_time": data.start_time or None,
+        "end_time": data.end_time or None,
+        "reason": data.reason,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.blocked_slots.insert_one(doc)
+    result = await db.blocked_slots.find_one({"block_id": block_id}, {"_id": 0})
+    result['created_at'] = datetime.fromisoformat(result['created_at'])
+    return BlockedSlot(**result)
+
+@api_router.delete("/admin/blocked-slots/{block_id}")
+async def delete_blocked_slot(block_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Remove a blocked slot (admin only)."""
+    await require_admin(request, session_token)
+    result = await db.blocked_slots.delete_one({"block_id": block_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Blocked slot not found")
+    return {"deleted": True, "block_id": block_id}
+
+# ============ REMINDERS (CRON) ENDPOINT ============
+
+@api_router.post("/internal/send-reminders")
+async def send_reminders(request: Request):
+    """Email reminders for tomorrow's appointments. Protected by a shared secret
+    (X-Cron-Secret header), intended to be hit by a scheduled job once a day."""
+    if not CRON_SECRET or request.headers.get("x-cron-secret") != CRON_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+    appts = await db.appointments.find(
+        {"booking_date": tomorrow, "status": {"$in": ["pending", "confirmed"]}},
+        {"_id": 0}
+    ).to_list(1000)
+
+    sent = 0
+    for a in appts:
+        u = await db.users.find_one({"user_id": a["user_id"]}, {"_id": 0})
+        if u and u.get("email"):
+            treatments = ", ".join(i.get("name", "?") for i in a.get("items", []))
+            send_email(
+                u["email"],
+                "Appointment reminder - Priiyanka's Nature Nest",
+                f"Dear {u.get('name', '')},\n\nThis is a reminder of your appointment tomorrow, "
+                f"{a['booking_date']} at {a['booking_time']}.\nTreatments: {treatments}\n\n"
+                f"See you soon,\nPriiyanka's Nature Nest"
+            )
+            sent += 1
+    return {"reminders_sent": sent, "date": tomorrow}
 
 # ============ ADMIN - USERS ENDPOINT ============
 

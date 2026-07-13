@@ -6,6 +6,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import axios from 'axios';
+import API from '../lib/api';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,9 @@ const Navbar = () => {
   const [registerName, setRegisterName] = useState('');
   const [loginErrors, setLoginErrors] = useState({});
   const [registerErrors, setRegisterErrors] = useState({});
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -111,6 +116,28 @@ const Navbar = () => {
       );
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const handleForgot = async () => {
+    if (!isEmail(forgotEmail)) {
+      toast.error(vmsg.email);
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await axios.post(`${API}/auth/forgot-password`, { email: forgotEmail });
+      toast.success(
+        language === 'en'
+          ? 'If that email is registered, a reset link has been sent.'
+          : 'Als dat e-mailadres bestaat, is er een resetlink verzonden.'
+      );
+      setForgotMode(false);
+      setForgotEmail('');
+    } catch (error) {
+      toast.error(language === 'en' ? 'Something went wrong. Please try again.' : 'Er ging iets mis. Probeer het opnieuw.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -278,7 +305,35 @@ const Navbar = () => {
                             t('auth.login')
                           )}
                         </Button>
+                        <div className="pt-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setForgotMode((v) => !v)}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            {forgotMode
+                              ? (language === 'en' ? 'Back to login' : 'Terug naar inloggen')
+                              : (language === 'en' ? 'Forgot your password?' : 'Wachtwoord vergeten?')}
+                          </button>
+                        </div>
                       </form>
+                      {forgotMode && (
+                        <div className="space-y-2 mt-4 pt-4 border-t border-border" data-testid="forgot-password">
+                          <Label htmlFor="forgot-email">{t('auth.email')}</Label>
+                          <Input
+                            id="forgot-email"
+                            type="email"
+                            autoComplete="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                          />
+                          <Button type="button" className="w-full" onClick={handleForgot} disabled={forgotLoading}>
+                            {forgotLoading
+                              ? (language === 'en' ? 'Sending...' : 'Versturen...')
+                              : (language === 'en' ? 'Send reset link' : 'Verstuur resetlink')}
+                          </Button>
+                        </div>
+                      )}
                     </TabsContent>
                     <TabsContent value="register">
                       <form onSubmit={handleRegister} className="space-y-4" noValidate>

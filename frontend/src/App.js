@@ -18,6 +18,8 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Suggestions from './pages/Suggestions';
 import NotFound from './pages/NotFound';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import './App.css';
 
 function AppRouter() {
@@ -38,6 +40,8 @@ function AppRouter() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/complaint" element={<Suggestions />} />
         <Route path="/suggestions" element={<Suggestions />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
