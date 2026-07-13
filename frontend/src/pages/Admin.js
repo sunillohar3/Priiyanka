@@ -16,9 +16,8 @@ const Admin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('services');
   const [services, setServices] = useState([]);
-  const [bookings, setBookings] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [users, setUsers] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messageFilter, setMessageFilter] = useState('all');
   const [showServiceForm, setShowServiceForm] = useState(false);
@@ -48,9 +47,8 @@ const Admin = () => {
     // (e.g. a cold-started backend) doesn't blank the whole dashboard.
     const endpoints = [
       { label: 'services', url: `${API}/services`, set: setServices },
-      { label: 'bookings', url: `${API}/bookings`, set: setBookings },
+      { label: 'appointments', url: `${API}/appointments`, set: setAppointments },
       { label: 'users', url: `${API}/admin/users`, set: setUsers },
-      { label: 'orders', url: `${API}/orders`, set: setOrders },
       { label: 'messages', url: `${API}/admin/contact`, set: setMessages }
     ];
 
@@ -165,18 +163,30 @@ const Admin = () => {
     setShowServiceForm(true);
   };
 
-  const handleUpdateBookingStatus = async (bookingId, status) => {
+  const handleUpdateAppointmentStatus = async (appointmentId, status) => {
     try {
       await axios.put(
-        `${API}/bookings/${bookingId}?status=${status}`,
+        `${API}/appointments/${appointmentId}?status=${status}`,
         {},
         { withCredentials: true }
       );
-      toast.success('Booking status updated');
+      toast.success('Appointment status updated');
       fetchData();
     } catch (error) {
-      console.error('Error updating booking:', error);
-      toast.error('Failed to update booking');
+      console.error('Error updating appointment:', error);
+      toast.error('Failed to update appointment');
+    }
+  };
+
+  const handleDeleteAppointment = async (appointmentId) => {
+    if (!window.confirm('Delete this appointment? This cannot be undone.')) return;
+    try {
+      await axios.delete(`${API}/appointments/${appointmentId}`, { withCredentials: true });
+      toast.success('Appointment deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast.error('Failed to delete appointment');
     }
   };
 
@@ -247,7 +257,7 @@ const Admin = () => {
           Admin Panel
         </h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-card p-6 rounded-2xl border border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
@@ -266,8 +276,8 @@ const Admin = () => {
                 <Calendar className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-foreground">{bookings.length}</p>
-                <p className="text-sm text-muted-foreground">Bookings</p>
+                <p className="text-3xl font-bold text-foreground">{appointments.length}</p>
+                <p className="text-sm text-muted-foreground">Appointments</p>
               </div>
             </div>
           </div>
@@ -287,19 +297,7 @@ const Admin = () => {
           <div className="bg-card p-6 rounded-2xl border border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-foreground">{orders.length}</p>
-                <p className="text-sm text-muted-foreground">Orders</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card p-6 rounded-2xl border border-border">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-accent" />
+                <MessageSquare className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-3xl font-bold text-foreground">{messages.length}</p>
@@ -323,15 +321,15 @@ const Admin = () => {
               Services
             </button>
             <button
-              onClick={() => setActiveTab('bookings')}
+              onClick={() => setActiveTab('appointments')}
               className={`px-6 py-4 font-semibold transition-colors ${
-                activeTab === 'bookings'
+                activeTab === 'appointments'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              data-testid="tab-bookings"
+              data-testid="tab-appointments"
             >
-              Bookings
+              Appointments
             </button>
             <button
               onClick={() => setActiveTab('users')}
@@ -343,17 +341,6 @@ const Admin = () => {
               data-testid="tab-users"
             >
               Users
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-6 py-4 font-semibold transition-colors ${
-                activeTab === 'orders'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              data-testid="tab-orders"
-            >
-              Orders
             </button>
             <button
               onClick={() => setActiveTab('messages')}
@@ -551,35 +538,56 @@ const Admin = () => {
               </div>
             )}
 
-            {activeTab === 'bookings' && (
+            {activeTab === 'appointments' && (
               <div>
-                <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Bookings</h2>
-                {bookings.length === 0 && (
-                  <p className="text-muted-foreground">No bookings yet.</p>
+                <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Appointments</h2>
+                {appointments.length === 0 && (
+                  <p className="text-muted-foreground">No appointments yet.</p>
                 )}
                 <div className="space-y-4">
-                  {bookings.map((booking) => (
-                    <div key={booking.booking_id} className="border border-border rounded-xl p-4">
-                      <div className="flex items-center justify-between">
+                  {appointments.map((appt) => (
+                    <div key={appt.appointment_id} className="border border-border rounded-xl p-4" data-testid={`appointment-${appt.appointment_id}`}>
+                      <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
                         <div>
-                          <p className="font-semibold text-foreground">{booking.booking_date} at {booking.booking_time}</p>
-                          <p className="text-sm text-muted-foreground">Booking ID: {booking.booking_id}</p>
-                          {booking.notes && <p className="text-sm text-muted-foreground mt-2">Notes: {booking.notes}</p>}
+                          <p className="font-semibold text-foreground flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            {appt.booking_date} at {appt.booking_time}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {appt.total_duration} min • €{(appt.total_amount || 0).toFixed(2)}
+                          </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                           <select
-                            value={booking.status}
-                            onChange={(e) => handleUpdateBookingStatus(booking.booking_id, e.target.value)}
+                            value={appt.status}
+                            onChange={(e) => handleUpdateAppointmentStatus(appt.appointment_id, e.target.value)}
                             className="px-4 py-2 rounded-lg border border-border bg-background"
-                            data-testid={`booking-status-${booking.booking_id}`}
+                            data-testid={`appointment-status-${appt.appointment_id}`}
                           >
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteAppointment(appt.appointment_id)}
+                            aria-label="Delete appointment"
+                            data-testid={`delete-appointment-${appt.appointment_id}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
                         </div>
                       </div>
+                      <div className="flex flex-wrap gap-2">
+                        {(appt.items || []).map((it, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-muted rounded-full text-sm text-foreground">
+                            {it.name}
+                          </span>
+                        ))}
+                      </div>
+                      {appt.notes && <p className="text-sm text-muted-foreground mt-3">Notes: {appt.notes}</p>}
                     </div>
                   ))}
                 </div>
@@ -642,29 +650,6 @@ const Admin = () => {
                     <li>• Admins can manage services, bookings, orders, and other users</li>
                     <li>• Regular users can only view their own bookings and orders</li>
                   </ul>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'orders' && (
-              <div>
-                <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Orders</h2>
-                {orders.length === 0 && (
-                  <p className="text-muted-foreground">No orders yet.</p>
-                )}
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.order_id} className="border border-border rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-foreground">€{order.total_amount.toFixed(2)}</p>
-                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                          {order.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Order ID: {order.order_id}</p>
-                      <p className="text-sm text-muted-foreground">{order.items.length} items</p>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}

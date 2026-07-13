@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Calendar, ShoppingBag, User } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Calendar, Clock, User, Euro } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
 
@@ -11,8 +10,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,12 +23,8 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [bookingsRes, ordersRes] = await Promise.all([
-        axios.get(`${API}/bookings`, { withCredentials: true }),
-        axios.get(`${API}/orders`, { withCredentials: true })
-      ]);
-      setBookings(bookingsRes.data);
-      setOrders(ordersRes.data);
+      const res = await axios.get(`${API}/appointments`, { withCredentials: true });
+      setAppointments(res.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -47,6 +41,15 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  const upcoming = appointments.filter((a) => a.status !== 'cancelled' && a.status !== 'completed').length;
+
+  const statusColor = {
+    pending: 'bg-accent/15 text-accent',
+    confirmed: 'bg-secondary/15 text-secondary',
+    completed: 'bg-primary/10 text-primary',
+    cancelled: 'bg-destructive/10 text-destructive',
+  };
 
   return (
     <div className="min-h-screen py-20 bg-muted">
@@ -65,9 +68,9 @@ const Dashboard = () => {
                 <Calendar className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-foreground">{bookings.length}</p>
+                <p className="text-3xl font-bold text-foreground">{appointments.length}</p>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Bookings' : 'Afspraken'}
+                  {language === 'en' ? 'Appointments' : 'Afspraken'}
                 </p>
               </div>
             </div>
@@ -76,12 +79,12 @@ const Dashboard = () => {
           <div className="bg-card p-6 rounded-2xl border border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-accent" />
+                <Clock className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-foreground">{orders.length}</p>
+                <p className="text-3xl font-bold text-foreground">{upcoming}</p>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Orders' : 'Bestellingen'}
+                  {language === 'en' ? 'Upcoming' : 'Aankomend'}
                 </p>
               </div>
             </div>
@@ -102,54 +105,46 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-card p-8 rounded-2xl border border-border">
-            <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
-              {language === 'en' ? 'Recent Bookings' : 'Recente Afspraken'}
-            </h2>
-            {bookings.length === 0 ? (
-              <p className="text-muted-foreground">
-                {language === 'en' ? 'No bookings yet' : 'Nog geen afspraken'}
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {bookings.slice(0, 5).map((booking) => (
-                  <div key={booking.booking_id} className="border-b border-border pb-4 last:border-0">
-                    <p className="font-semibold text-foreground">{booking.booking_date}</p>
-                    <p className="text-sm text-muted-foreground">{booking.booking_time}</p>
-                    <span className="inline-block mt-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                      {booking.status}
-                    </span>
+        <div className="bg-card p-8 rounded-2xl border border-border">
+          <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
+            {language === 'en' ? 'Your Appointments' : 'Uw Afspraken'}
+          </h2>
+          {appointments.length === 0 ? (
+            <p className="text-muted-foreground">
+              {language === 'en' ? 'No appointments yet' : 'Nog geen afspraken'}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {appointments.map((appt) => (
+                <div key={appt.appointment_id} className="border-b border-border pb-4 last:border-0">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        {appt.booking_date} · {appt.booking_time}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {(appt.items || []).map((it, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-muted rounded-full text-xs text-foreground">
+                            {it.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary flex items-center gap-1 justify-end">
+                        <Euro className="w-4 h-4" />
+                        {(appt.total_amount || 0).toFixed(2)}
+                      </p>
+                      <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColor[appt.status] || 'bg-muted text-muted-foreground'}`}>
+                        {appt.status}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card p-8 rounded-2xl border border-border">
-            <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
-              {language === 'en' ? 'Recent Orders' : 'Recente Bestellingen'}
-            </h2>
-            {orders.length === 0 ? (
-              <p className="text-muted-foreground">
-                {language === 'en' ? 'No orders yet' : 'Nog geen bestellingen'}
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {orders.slice(0, 5).map((order) => (
-                  <div key={order.order_id} className="border-b border-border pb-4 last:border-0">
-                    <p className="font-semibold text-foreground">€{order.total_amount.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.items.length} {language === 'en' ? 'items' : 'items'}
-                    </p>
-                    <span className="inline-block mt-2 px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">
-                      {order.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -296,6 +296,25 @@ class ContactCreate(BaseModel):
     subject: Optional[str] = Field(None, max_length=200)
     message: str = Field(..., min_length=1, max_length=5000)
 
+class Appointment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    appointment_id: str
+    user_id: str
+    items: List[dict]          # [{service_id, name, price, duration}]
+    total_amount: float
+    total_duration: int        # minutes
+    booking_date: str
+    booking_time: str
+    notes: Optional[str] = None
+    status: str
+    created_at: datetime
+
+class AppointmentCreate(BaseModel):
+    items: List[dict]
+    booking_date: str
+    booking_time: str
+    notes: Optional[str] = None
+
 # ============ AUTH HELPER ============
 
 async def get_current_user(request: Request, session_token: Optional[str] = Cookie(None)) -> User:
@@ -666,6 +685,133 @@ async def create_order(order_data: OrderCreate, request: Request, session_token:
     result = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     result['created_at'] = datetime.fromisoformat(result['created_at'])
     return Order(**result)
+
+# ============ APPOINTMENTS ENDPOINTS ============
+# An appointment is a single visit that may include one or more treatments,
+# booked for one date/time. This replaces the separate "orders" + "bookings"
+# concepts for a service business.
+
+def _time_to_minutes(value: str):
+    """Parse 'HH:MM' into minutes since midnight, or None if unparseable."""
+    try:
+        parts = value.split(":")
+        return int(parts[0]) * 60 + int(parts[1])
+    except Exception:
+        return None
+
+@api_router.get("/appointments", response_model=List[Appointment])
+async def get_appointments(request: Request, session_token: Optional[str] = Cookie(None)):
+    """List appointments (own for users, all for admins)."""
+    user = await get_current_user(request, session_token)
+
+    query = {} if user.role == "admin" else {"user_id": user.user_id}
+    appointments = await db.appointments.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for appt in appointments:
+        if isinstance(appt['created_at'], str):
+            appt['created_at'] = datetime.fromisoformat(appt['created_at'])
+    return appointments
+
+@api_router.post("/appointments", response_model=Appointment)
+async def create_appointment(data: AppointmentCreate, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
+    """Create a single appointment (visit) covering one or more treatments."""
+    user = await get_current_user(request, session_token)
+
+    if not data.items:
+        raise HTTPException(status_code=400, detail="No treatments selected")
+    if not data.booking_date or not data.booking_time:
+        raise HTTPException(status_code=400, detail="Please select a date and time")
+
+    total_amount = round(sum(float(i.get("price", 0)) for i in data.items), 2)
+    total_duration = sum(int(i.get("duration", 0) or 0) for i in data.items)
+
+    # Overlap-aware conflict check: the requested visit occupies
+    # [start, start + total_duration]; reject if it overlaps a live appointment.
+    new_start = _time_to_minutes(data.booking_time)
+    if new_start is not None:
+        new_end = new_start + total_duration
+        same_day = await db.appointments.find(
+            {"booking_date": data.booking_date, "status": {"$ne": "cancelled"}},
+            {"_id": 0}
+        ).to_list(1000)
+        for appt in same_day:
+            s = _time_to_minutes(appt.get("booking_time", ""))
+            if s is None:
+                continue
+            e = s + int(appt.get("total_duration", 0) or 0)
+            if new_start < e and s < new_end:
+                raise HTTPException(
+                    status_code=409,
+                    detail="That time overlaps an existing appointment. Please choose another time."
+                )
+
+    appointment_id = f"appt_{uuid.uuid4().hex[:12]}"
+    appointment_doc = {
+        "appointment_id": appointment_id,
+        "user_id": user.user_id,
+        "items": data.items,
+        "total_amount": total_amount,
+        "total_duration": total_duration,
+        "booking_date": data.booking_date,
+        "booking_time": data.booking_time,
+        "notes": data.notes,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.appointments.insert_one(appointment_doc)
+
+    result = await db.appointments.find_one({"appointment_id": appointment_id}, {"_id": 0})
+    result['created_at'] = datetime.fromisoformat(result['created_at'])
+
+    # Best-effort notifications.
+    treatments = ", ".join(i.get("name", "?") for i in data.items)
+    when = f"{data.booking_date} at {data.booking_time}"
+    background_tasks.add_task(
+        send_email,
+        ADMIN_NOTIFY_EMAIL,
+        "New appointment request",
+        f"New appointment from {user.name} ({user.email}).\n"
+        f"When: {when}\nTreatments: {treatments}\n"
+        f"Duration: {total_duration} min\nTotal: €{total_amount:.2f}\n"
+        f"Notes: {data.notes or '-'}"
+    )
+    background_tasks.add_task(
+        send_email,
+        user.email,
+        "Your appointment request - Priiyanka's Nature Nest",
+        f"Dear {user.name},\n\nWe have received your appointment request for {when}.\n"
+        f"Treatments: {treatments}\nEstimated total: €{total_amount:.2f} (payable at the clinic).\n\n"
+        f"We will confirm your appointment shortly.\n\nWarm regards,\nPriiyanka's Nature Nest"
+    )
+
+    return Appointment(**result)
+
+@api_router.put("/appointments/{appointment_id}")
+async def update_appointment_status(appointment_id: str, status: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Update appointment status (admin only)."""
+    await require_admin(request, session_token)
+
+    if status not in ["pending", "confirmed", "completed", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    result = await db.appointments.update_one(
+        {"appointment_id": appointment_id},
+        {"$set": {"status": status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    return {"message": "Appointment status updated"}
+
+@api_router.delete("/appointments/{appointment_id}")
+async def delete_appointment(appointment_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete an appointment (admin only)."""
+    await require_admin(request, session_token)
+
+    result = await db.appointments.delete_one({"appointment_id": appointment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    return {"deleted": True, "appointment_id": appointment_id}
 
 # ============ ADMIN - USERS ENDPOINT ============
 
