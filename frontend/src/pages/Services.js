@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
-import { ShoppingCart, Clock, Euro } from 'lucide-react';
+import { ShoppingCart, Clock, Euro, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import API from '../lib/api';
 
 const Services = () => {
   const { t, language } = useLanguage();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, isInCart } = useCart();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,17 +30,20 @@ const Services = () => {
   };
 
   const handleAddToCart = (service) => {
-    addToCart(service);
-    toast.success(
-      language === 'en' 
-        ? `Added ${service.name_en} to cart` 
-        : `${service.name_nl} toegevoegd aan winkelwagen`
-    );
-  };
-
-  const getCartQuantity = (serviceId) => {
-    const item = cartItems.find(item => item.service_id === serviceId);
-    return item ? item.quantity : 0;
+    const added = addToCart(service);
+    if (added) {
+      toast.success(
+        language === 'en'
+          ? `Added ${service.name_en} to cart`
+          : `${service.name_nl} toegevoegd aan winkelwagen`
+      );
+    } else {
+      toast.info(
+        language === 'en'
+          ? `${service.name_en} is already in your cart`
+          : `${service.name_nl} staat al in uw winkelwagen`
+      );
+    }
   };
 
   if (loading) {
@@ -82,9 +85,11 @@ const Services = () => {
               >
                 {service.image_url && (
                   <div className="h-48 overflow-hidden">
-                    <img 
-                      src={service.image_url} 
+                    <img
+                      src={service.image_url}
                       alt={language === 'en' ? service.name_en : service.name_nl}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
@@ -109,18 +114,24 @@ const Services = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button 
-                      onClick={() => handleAddToCart(service)}
-                      className="flex-1 bg-primary text-primary-foreground hover:bg-secondary rounded-full"
-                      data-testid={`add-to-cart-${service.service_id}`}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      {t('services.addToCart')}
-                    </Button>
-                    {getCartQuantity(service.service_id) > 0 && (
-                      <div className="px-3 py-2 bg-secondary text-secondary-foreground rounded-full font-bold text-sm">
-                        {getCartQuantity(service.service_id)} in cart
-                      </div>
+                    {isInCart(service.service_id) ? (
+                      <Button
+                        disabled
+                        className="flex-1 bg-secondary text-secondary-foreground rounded-full disabled:opacity-100"
+                        data-testid={`in-cart-${service.service_id}`}
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        {language === 'en' ? 'In cart' : 'In winkelwagen'}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleAddToCart(service)}
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-secondary rounded-full"
+                        data-testid={`add-to-cart-${service.service_id}`}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        {t('services.addToCart')}
+                      </Button>
                     )}
                   </div>
                 </div>

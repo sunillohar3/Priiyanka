@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
-import { Trash2, Euro, ShoppingBag, Calendar, Check } from 'lucide-react';
+import { Trash2, Euro, ShoppingBag, Calendar, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -15,16 +15,22 @@ const Cart = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [bookingItems, setBookingItems] = useState({});
+  const [bookingDetails, setBookingDetails] = useState({});
+  const [processing, setProcessing] = useState(false);
 
-  const toggleBooking = (serviceId) => {
-    setBookingItems(prev => ({
-      ...prev,
-      [serviceId]: !prev[serviceId]
-    }));
+  const isItemBooking = (serviceId) => Boolean(bookingDetails[serviceId]);
+
+  const setBooking = (serviceId, details) => {
+    setBookingDetails(prev => ({ ...prev, [serviceId]: details }));
   };
 
-  const isItemBooking = (serviceId) => bookingItems[serviceId] === true;
+  const clearBooking = (serviceId) => {
+    setBookingDetails(prev => {
+      const next = { ...prev };
+      delete next[serviceId];
+      return next;
+    });
+  };
 
   const handleCheckout = async () => {
     if (!user) {
@@ -32,12 +38,25 @@ const Cart = () => {
       return;
     }
 
-    try {
-      // Separate items into orders and bookings
-      const orderItems = cartItems.filter(item => !isItemBooking(item.service_id));
-      const bookingItemsList = cartItems.filter(item => isItemBooking(item.service_id));
+    const orderItems = cartItems.filter(item => !isItemBooking(item.service_id));
+    const bookingList = cartItems.filter(item => isItemBooking(item.service_id));
 
-      // Create order for non-booking items
+    // Safety net: every booking item must have a date and time selected.
+    const incomplete = bookingList.find(item => {
+      const details = bookingDetails[item.service_id];
+      return !details || !details.booking_date || !details.booking_time;
+    });
+    if (incomplete) {
+      toast.error(
+        language === 'en'
+          ? `Please select a date and time for "${incomplete.name_en}"`
+          : `Selecteer een datum en tijd voor "${incomplete.name_nl}"`
+      );
+      return;
+    }
+
+    setProcessing(true);
+    try {
       if (orderItems.length > 0) {
         const orderData = {
           items: orderItems.map(item => ({
@@ -49,37 +68,57 @@ const Cart = () => {
           total_amount: orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
         };
 
-        await axios.post(`${API}/orders`, orderData, {
-          withCredentials: true
-        });
+        await axios.post(`${API}/orders`, orderData, { withCredentials: true });
+      }
 
-        toast.success(
-          language === 'en' 
-            ? `Order placed with ${orderItems.length} service(s)!` 
-            : `Bestelling geplaatst met ${orderItems.length} service(s)!`
+      // Create a real booking for each item scheduled via the modal.
+      for (const item of bookingList) {
+        const details = bookingDetails[item.service_id];
+        await axios.post(
+          `${API}/bookings`,
+          {
+            service_id: item.service_id,
+            booking_date: details.booking_date,
+            booking_time: details.booking_time,
+            notes: details.notes || ''
+          },
+          { withCredentials: true }
         );
       }
 
-      // Create bookings for booking items
-      for (const item of bookingItemsList) {
-        // Note: Bookings need date/time which should be selected via BookingModal
-        // For now we'll show a message that bookings need to be done separately
-        toast.info(
+      const parts = [];
+      if (orderItems.length > 0) {
+        parts.push(
           language === 'en'
-            ? `Please book "${item.name_en}" using the booking form`
-            : `Boek "${item.name_nl}" alstublieft via het boekingsformulier`
+            ? `${orderItems.length} order(s)`
+            : `${orderItems.length} bestelling(en)`
         );
       }
+      if (bookingList.length > 0) {
+        parts.push(
+          language === 'en'
+            ? `${bookingList.length} appointment(s)`
+            : `${bookingList.length} afspraak/afspraken`
+        );
+      }
+      toast.success(
+        language === 'en'
+          ? `Checkout complete: ${parts.join(' and ')}.`
+          : `Afrekenen voltooid: ${parts.join(' en ')}.`
+      );
 
       clearCart();
+      setBookingDetails({});
       navigate('/dashboard');
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error(
-        language === 'en' 
-          ? 'Failed to complete checkout' 
-          : 'Kan afrekenen niet voltooien'
+        language === 'en'
+          ? 'Failed to complete checkout. Please try again.'
+          : 'Kan afrekenen niet voltooien. Probeer het opnieuw.'
       );
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -109,87 +148,105 @@ const Cart = () => {
         </h1>
 
         <div className="space-y-4 mb-8">
-          {cartItems.map((item) => (
-            <div 
-              key={item.service_id} 
-              className="bg-card p-6 rounded-2xl border border-border"
-              data-testid={`cart-item-${item.service_id}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-heading font-semibold text-foreground">
-                    {language === 'en' ? item.name_en : item.name_nl}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {item.duration} {t('services.minutes')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Quantity' : 'Aantal'}: {item.quantity}
-                    </p>
-                    <p className="text-xl font-bold text-primary flex items-center gap-1">
-                      <Euro className="w-5 h-5" />
-                      {(item.price * item.quantity).toFixed(2)}
+          {cartItems.map((item) => {
+            const details = bookingDetails[item.service_id];
+            const booking = isItemBooking(item.service_id);
+            return (
+              <div
+                key={item.service_id}
+                className="bg-card p-6 rounded-2xl border border-border"
+                data-testid={`cart-item-${item.service_id}`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-heading font-semibold text-foreground">
+                      {language === 'en' ? item.name_en : item.name_nl}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {item.duration} {t('services.minutes')}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFromCart(item.service_id)}
-                    data-testid={`remove-item-${item.service_id}`}
-                  >
-                    <Trash2 className="w-5 h-5 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4 border-t border-border">
-                {isItemBooking(item.service_id) ? (
-                  <>
-                    <BookingModal
-                      service={item}
-                      trigger={
-                        <Button 
-                          variant="outline"
-                          className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                          data-testid={`booking-edit-${item.service_id}`}
-                        >
-                          <Calendar className="w-4 h-4 mr-2" />
-                          {language === 'en' ? 'Edit Booking' : 'Boeking Bewerken'}
-                        </Button>
-                      }
-                    />
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-primary flex items-center gap-1">
+                        <Euro className="w-5 h-5" />
+                        {item.price.toFixed(2)}
+                      </p>
+                    </div>
                     <Button
-                      onClick={() => toggleBooking(item.service_id)}
                       variant="ghost"
-                      className="flex-1"
-                      data-testid={`toggle-purchase-${item.service_id}`}
+                      size="icon"
+                      onClick={() => { removeFromCart(item.service_id); clearBooking(item.service_id); }}
+                      aria-label={language === 'en' ? `Remove ${item.name_en}` : `${item.name_nl} verwijderen`}
+                      data-testid={`remove-item-${item.service_id}`}
                     >
-                      {language === 'en' ? 'Change to Purchase' : 'Wijzigen in Aankoop'}
+                      <Trash2 className="w-5 h-5 text-destructive" />
                     </Button>
-                  </>
-                ) : (
-                  <>
+                  </div>
+                </div>
+
+                {booking && details && (
+                  <div className="flex flex-wrap items-center gap-4 mb-3 text-sm font-medium text-primary" data-testid={`booking-slot-${item.service_id}`}>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {details.booking_date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {details.booking_time}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  {booking ? (
+                    <>
+                      <BookingModal
+                        service={item}
+                        initialData={details}
+                        onConfirm={(d) => setBooking(item.service_id, d)}
+                        confirmLabel={language === 'en' ? 'Update appointment' : 'Afspraak bijwerken'}
+                        trigger={
+                          <Button
+                            variant="outline"
+                            className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                            data-testid={`booking-edit-${item.service_id}`}
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            {language === 'en' ? 'Edit appointment' : 'Afspraak bewerken'}
+                          </Button>
+                        }
+                      />
+                      <Button
+                        onClick={() => clearBooking(item.service_id)}
+                        variant="ghost"
+                        className="flex-1"
+                        data-testid={`toggle-purchase-${item.service_id}`}
+                      >
+                        {language === 'en' ? 'Change to purchase' : 'Wijzigen in aankoop'}
+                      </Button>
+                    </>
+                  ) : (
                     <BookingModal
                       service={item}
+                      onConfirm={(d) => setBooking(item.service_id, d)}
+                      confirmLabel={language === 'en' ? 'Confirm appointment' : 'Afspraak bevestigen'}
                       trigger={
-                        <Button 
+                        <Button
                           variant="outline"
                           className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                           data-testid={`book-item-${item.service_id}`}
                         >
                           <Calendar className="w-4 h-4 mr-2" />
-                          {language === 'en' ? 'Book Instead' : 'Boek In Plaats Daarvan'}
+                          {language === 'en' ? 'Book appointment instead' : 'Boek in plaats daarvan'}
                         </Button>
                       }
                     />
-                  </>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="bg-muted p-8 rounded-2xl">
@@ -200,12 +257,20 @@ const Cart = () => {
               {getTotal().toFixed(2)}
             </span>
           </div>
-          <Button 
+          <Button
             onClick={handleCheckout}
+            disabled={processing}
             className="w-full bg-primary text-primary-foreground hover:bg-secondary rounded-full py-6 text-lg"
             data-testid="checkout-button"
           >
-            {t('cart.checkout')}
+            {processing ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-current" />
+                {language === 'en' ? 'Processing...' : 'Verwerken...'}
+              </span>
+            ) : (
+              t('cart.checkout')
+            )}
           </Button>
         </div>
       </div>

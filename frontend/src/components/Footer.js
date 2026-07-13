@@ -19,24 +19,36 @@ const Footer = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-3 items-center">
               <div className="bg-white p-2 rounded">
-                <img 
-                  src="https://lirp.cdn-website.com/be32551c/dms3rep/multi/opt/Logo+LVNT-definitief-640w.jpg" 
-                  alt="LVNT Logo" 
-                  className="h-12 w-auto object-contain" 
+                <img
+                  src="/assets/certifications/lvnt.jpg"
+                  alt="LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten) member logo"
+                  width="640"
+                  height="333"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-auto object-contain"
                 />
               </div>
               <div className="bg-white p-2 rounded">
-                <img 
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhiU0s8MZoPsyn4CndSspNKUgY8s6ChQh-JA&s" 
-                  alt="RBCZ Logo" 
-                  className="h-12 w-auto object-contain" 
+                <img
+                  src="/assets/certifications/rbcz.jpg"
+                  alt="RBCZ (Register Beroepsbeoefenaren Complementaire Zorg) registered logo"
+                  width="225"
+                  height="225"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-auto object-contain"
                 />
               </div>
               <div className="bg-white p-2 rounded">
-                <img 
-                  src="https://salutee.nl/wp-content/uploads/2018/09/tcz-logo-e1546690810110.jpg" 
-                  alt="TCZ Logo" 
-                  className="h-12 w-auto object-contain" 
+                <img
+                  src="/assets/certifications/tcz.jpg"
+                  alt="TCZ registered logo"
+                  width="737"
+                  height="536"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-auto object-contain"
                 />
               </div>
             </div>

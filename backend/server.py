@@ -180,6 +180,24 @@ class OrderCreate(BaseModel):
     items: List[dict]
     total_amount: float
 
+class ContactMessage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    message_id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    subject: Optional[str] = None
+    message: str
+    status: str = "new"
+    created_at: datetime
+
+class ContactCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    email: str = Field(..., min_length=3, max_length=200)
+    phone: Optional[str] = Field(None, max_length=40)
+    subject: Optional[str] = Field(None, max_length=200)
+    message: str = Field(..., min_length=1, max_length=5000)
+
 # ============ AUTH HELPER ============
 
 async def get_current_user(request: Request, session_token: Optional[str] = Cookie(None)) -> User:
@@ -516,11 +534,11 @@ async def create_order(order_data: OrderCreate, request: Request, session_token:
 
 # ============ ADMIN - USERS ENDPOINT ============
 
-@api_router.get("/admin/users", response_model=List[User])
+@api_router.get("/admin/users", response_model=List[UserOut])
 async def get_all_users(request: Request, session_token: Optional[str] = Cookie(None)):
-    """Get all users (admin only)"""
+    """Get all users (admin only). Uses UserOut so password hashes are never returned."""
     await require_admin(request, session_token)
-    
+
     users = await db.users.find({}, {"_id": 0}).to_list(1000)
     for user in users:
         if isinstance(user['created_at'], str):
@@ -544,6 +562,58 @@ async def update_user_role(user_id: str, role: str, request: Request, session_to
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "User role updated"}
+
+# ============ CONTACT ENDPOINTS ============
+
+@api_router.post("/contact", response_model=ContactMessage)
+async def create_contact_message(contact_data: ContactCreate):
+    """Submit a contact / inquiry message (public)."""
+    email = contact_data.email.strip()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    message_id = f"msg_{uuid.uuid4().hex[:12]}"
+    message_doc = {
+        "message_id": message_id,
+        **contact_data.model_dump(),
+        "email": email,
+        "status": "new",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.contact_messages.insert_one(message_doc)
+
+    result = await db.contact_messages.find_one({"message_id": message_id}, {"_id": 0})
+    result['created_at'] = datetime.fromisoformat(result['created_at'])
+    return ContactMessage(**result)
+
+@api_router.get("/admin/contact", response_model=List[ContactMessage])
+async def get_contact_messages(request: Request, session_token: Optional[str] = Cookie(None)):
+    """List contact messages, newest first (admin only)."""
+    await require_admin(request, session_token)
+
+    messages = await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for message in messages:
+        if isinstance(message['created_at'], str):
+            message['created_at'] = datetime.fromisoformat(message['created_at'])
+    return messages
+
+@api_router.put("/admin/contact/{message_id}")
+async def update_contact_status(message_id: str, status: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Update a contact message status (admin only)."""
+    await require_admin(request, session_token)
+
+    if status not in ["new", "read", "handled"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    result = await db.contact_messages.update_one(
+        {"message_id": message_id},
+        {"$set": {"status": status}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    return {"message": "Message status updated"}
 
 # ============ ROOT ============
 

@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield, MessageSquare, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
@@ -19,6 +19,7 @@ const Admin = () => {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
@@ -42,20 +43,32 @@ const Admin = () => {
   }, [user, navigate]);
 
   const fetchData = async () => {
-    try {
-      const [servicesRes, bookingsRes, usersRes, ordersRes] = await Promise.all([
-        axios.get(`${API}/services`),
-        axios.get(`${API}/bookings`, { withCredentials: true }),
-        axios.get(`${API}/admin/users`, { withCredentials: true }),
-        axios.get(`${API}/orders`, { withCredentials: true })
-      ]);
-      setServices(servicesRes.data);
-      setBookings(bookingsRes.data);
-      setUsers(usersRes.data);
-      setOrders(ordersRes.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Failed to load data');
+    // Load each section independently so one slow/failing endpoint
+    // (e.g. a cold-started backend) doesn't blank the whole dashboard.
+    const endpoints = [
+      { label: 'services', url: `${API}/services`, set: setServices },
+      { label: 'bookings', url: `${API}/bookings`, set: setBookings },
+      { label: 'users', url: `${API}/admin/users`, set: setUsers },
+      { label: 'orders', url: `${API}/orders`, set: setOrders },
+      { label: 'messages', url: `${API}/admin/contact`, set: setMessages }
+    ];
+
+    const results = await Promise.allSettled(
+      endpoints.map(e => axios.get(e.url, { withCredentials: true }))
+    );
+
+    const failed = [];
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
+        endpoints[i].set(result.value.data);
+      } else {
+        console.error(`Failed to load ${endpoints[i].label}:`, result.reason);
+        failed.push(endpoints[i].label);
+      }
+    });
+
+    if (failed.length > 0) {
+      toast.error(`Failed to load: ${failed.join(', ')}`);
     }
   };
 
@@ -166,6 +179,21 @@ const Admin = () => {
     }
   };
 
+  const handleUpdateMessageStatus = async (messageId, status) => {
+    try {
+      await axios.put(
+        `${API}/admin/contact/${messageId}?status=${status}`,
+        {},
+        { withCredentials: true }
+      );
+      toast.success('Message status updated');
+      fetchData();
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message');
+    }
+  };
+
   const handleUpdateUserRole = async (userId, role) => {
     try {
       await axios.put(
@@ -190,7 +218,7 @@ const Admin = () => {
           Admin Panel
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-card p-6 rounded-2xl border border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
@@ -235,6 +263,18 @@ const Admin = () => {
               <div>
                 <p className="text-3xl font-bold text-foreground">{orders.length}</p>
                 <p className="text-sm text-muted-foreground">Orders</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card p-6 rounded-2xl border border-border">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground">{messages.length}</p>
+                <p className="text-sm text-muted-foreground">Messages</p>
               </div>
             </div>
           </div>
@@ -285,6 +325,17 @@ const Admin = () => {
               data-testid="tab-orders"
             >
               Orders
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`px-6 py-4 font-semibold transition-colors ${
+                activeTab === 'messages'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-messages"
+            >
+              Messages
             </button>
           </div>
 
@@ -474,6 +525,9 @@ const Admin = () => {
             {activeTab === 'bookings' && (
               <div>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Bookings</h2>
+                {bookings.length === 0 && (
+                  <p className="text-muted-foreground">No bookings yet.</p>
+                )}
                 <div className="space-y-4">
                   {bookings.map((booking) => (
                     <div key={booking.booking_id} className="border border-border rounded-xl p-4">
@@ -566,6 +620,9 @@ const Admin = () => {
             {activeTab === 'orders' && (
               <div>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Orders</h2>
+                {orders.length === 0 && (
+                  <p className="text-muted-foreground">No orders yet.</p>
+                )}
                 <div className="space-y-4">
                   {orders.map((order) => (
                     <div key={order.order_id} className="border border-border rounded-xl p-4">
@@ -580,6 +637,48 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'messages' && (
+              <div>
+                <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Contact Messages</h2>
+                {messages.length === 0 ? (
+                  <p className="text-muted-foreground">No messages yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <div key={msg.message_id} className="border border-border rounded-xl p-4" data-testid={`message-${msg.message_id}`}>
+                        <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              {msg.name}
+                              {msg.subject && <span className="text-muted-foreground font-normal"> — {msg.subject}</span>}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                              <a href={`mailto:${msg.email}`} className="flex items-center gap-1 hover:text-primary">
+                                <Mail className="w-3.5 h-3.5" /> {msg.email}
+                              </a>
+                              {msg.phone && <span>{msg.phone}</span>}
+                              <span>{new Date(msg.created_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <select
+                            value={msg.status}
+                            onChange={(e) => handleUpdateMessageStatus(msg.message_id, e.target.value)}
+                            className="px-4 py-2 rounded-lg border border-border bg-background"
+                            data-testid={`message-status-${msg.message_id}`}
+                          >
+                            <option value="new">New</option>
+                            <option value="read">Read</option>
+                            <option value="handled">Handled</option>
+                          </select>
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap mt-2">{msg.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -16,19 +16,21 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // A service can be added to the cart only once (no quantity increment).
+  // Returns true if it was added, false if it was already present.
   const addToCart = (service) => {
+    let added = false;
     setCartItems(prev => {
-      const existing = prev.find(item => item.service_id === service.service_id);
-      if (existing) {
-        return prev.map(item => 
-          item.service_id === service.service_id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+      if (prev.find(item => item.service_id === service.service_id)) {
+        return prev;
       }
+      added = true;
       return [...prev, { ...service, quantity: 1 }];
     });
+    return added;
   };
+
+  const isInCart = (serviceId) => cartItems.some(item => item.service_id === serviceId);
 
   const removeFromCart = (serviceId) => {
     setCartItems(prev => prev.filter(item => item.service_id !== serviceId));
@@ -60,11 +62,12 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider value={{
       cartItems,
       addToCart,
+      isInCart,
       removeFromCart,
       updateQuantity,
       clearCart,
       getTotal,
-      cartCount: cartItems.reduce((sum, item) => sum + item.quantity, 0)
+      cartCount: cartItems.length
     }}>
       {children}
     </CartContext.Provider>

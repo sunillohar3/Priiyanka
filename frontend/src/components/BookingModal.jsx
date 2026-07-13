@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -11,16 +11,28 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import API from '../lib/api';
 
-const BookingModal = ({ service, trigger }) => {
+const BookingModal = ({ service, trigger, onConfirm, initialData, confirmLabel }) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    booking_date: '',
-    booking_time: '',
-    notes: ''
+    booking_date: initialData?.booking_date || '',
+    booking_time: initialData?.booking_time || '',
+    notes: initialData?.notes || ''
   });
+
+  // Sync prefilled values whenever the modal is (re)opened
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        booking_date: initialData?.booking_date || '',
+        booking_time: initialData?.booking_time || '',
+        notes: initialData?.notes || ''
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,13 +45,25 @@ const BookingModal = ({ service, trigger }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!user) {
-      toast.error(language === 'en' ? 'Please login to book an appointment' : 'Log in om een afspraak te maken');
+    if (!formData.booking_date || !formData.booking_time) {
+      toast.error(language === 'en' ? 'Please select date and time' : 'Selecteer datum en tijd');
       return;
     }
 
-    if (!formData.booking_date || !formData.booking_time) {
-      toast.error(language === 'en' ? 'Please select date and time' : 'Selecteer datum en tijd');
+    // Deferred mode: hand the chosen slot back to the parent (e.g. cart checkout)
+    // instead of creating the booking immediately.
+    if (onConfirm) {
+      onConfirm({
+        booking_date: formData.booking_date,
+        booking_time: formData.booking_time,
+        notes: formData.notes
+      });
+      setIsOpen(false);
+      return;
+    }
+
+    if (!user) {
+      toast.error(language === 'en' ? 'Please login to book an appointment' : 'Log in om een afspraak te maken');
       return;
     }
 
@@ -186,7 +210,7 @@ const BookingModal = ({ service, trigger }) => {
                     {language === 'en' ? 'Booking...' : 'Boeken...'}
                   </div>
                 ) : (
-                  t('booking.submit')
+                  confirmLabel || t('booking.submit')
                 )}
               </Button>
             </div>

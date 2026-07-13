@@ -40,7 +40,18 @@ export const translations = {
       email: 'Email',
       hours: 'Operating Hours',
       mondayFriday: 'Monday - Friday: 13:00 - 18:00',
-      saturday: 'Saturday: 10:00 - 13:00'
+      saturday: 'Saturday: 10:00 - 13:00',
+      formHeading: 'Send us a message',
+      formIntro: 'Have a question or want to book a consultation? Fill in the form and we will get back to you within 2 business days.',
+      formName: 'Name',
+      formEmail: 'Email',
+      formPhone: 'Phone (optional)',
+      formSubject: 'Subject',
+      formMessage: 'Message',
+      formSend: 'Send Message',
+      formSending: 'Sending...',
+      formSuccess: 'Thank you! Your message has been sent. We will get back to you soon.',
+      formError: 'Something went wrong. Please try again or email us directly.'
     },
     cart: {
       title: 'Your Cart',
@@ -113,7 +124,18 @@ export const translations = {
       email: 'E-mail',
       hours: 'Openingstijden',
       mondayFriday: 'Maandag - Vrijdag: 13:00 - 18:00',
-      saturday: 'Zaterdag: 10:00 - 13:00'
+      saturday: 'Zaterdag: 10:00 - 13:00',
+      formHeading: 'Stuur ons een bericht',
+      formIntro: 'Heeft u een vraag of wilt u een consult boeken? Vul het formulier in en wij nemen binnen 2 werkdagen contact met u op.',
+      formName: 'Naam',
+      formEmail: 'E-mail',
+      formPhone: 'Telefoon (optioneel)',
+      formSubject: 'Onderwerp',
+      formMessage: 'Bericht',
+      formSend: 'Bericht Versturen',
+      formSending: 'Versturen...',
+      formSuccess: 'Bedankt! Uw bericht is verzonden. We nemen spoedig contact met u op.',
+      formError: 'Er ging iets mis. Probeer het opnieuw of e-mail ons rechtstreeks.'
     },
     cart: {
       title: 'Uw Winkelwagen',

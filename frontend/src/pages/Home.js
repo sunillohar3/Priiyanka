@@ -40,8 +40,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      <section 
-        className="relative h-[80vh] flex items-center justify-center overflow-hidden"
+      <section
+        className="relative h-[80dvh] flex items-center justify-center overflow-hidden"
         style={{
           backgroundImage: 'url(https://images.unsplash.com/photo-1685881050089-746db3e93938?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGZvcmVzdCUyMHN1bmxpZ2h0JTIwbmF0dXJlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzAxMzI0NDN8MA&ixlib=rb-4.1.0&q=85)',
           backgroundSize: 'cover',
@@ -49,6 +49,7 @@ const Home = () => {
         }}
         data-testid="hero-section"
       >
+        <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
         <div className="relative z-10 text-center px-6 max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-heading font-bold text-white mb-6">
@@ -117,9 +118,11 @@ const Home = () => {
               </Link>
             </div>
             <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
-              <img 
+              <img
                 src="/assets/profile.jpg"
                 alt="VD. Priyanka Singh - Ayurvedic Consultant"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </div>

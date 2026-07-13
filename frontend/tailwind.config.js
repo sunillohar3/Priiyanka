@@ -38,7 +38,7 @@ module.exports = {
         },
         muted: {
           DEFAULT: "#E8DFD0",
-          foreground: "#5C6B5D",
+          foreground: "#4A5A4B",
         },
         card: {
           DEFAULT: "#FFFFFF",

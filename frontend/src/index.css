@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap');
+/* Fonts are loaded via <link rel="preconnect"> + stylesheet in public/index.html
+   (non-render-blocking, with display=swap). Do not re-import here. */
 
 @tailwind base;
 @tailwind components;
