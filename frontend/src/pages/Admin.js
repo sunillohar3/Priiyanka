@@ -20,6 +20,7 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messageFilter, setMessageFilter] = useState('all');
+  const [appointmentFilter, setAppointmentFilter] = useState('all');
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
@@ -243,6 +244,17 @@ const Admin = () => {
   const filteredMessages = messageFilter === 'all'
     ? messages
     : messages.filter((m) => m.status === messageFilter);
+
+  const appointmentCounts = {
+    all: appointments.length,
+    pending: appointments.filter((a) => a.status === 'pending').length,
+    confirmed: appointments.filter((a) => a.status === 'confirmed').length,
+    completed: appointments.filter((a) => a.status === 'completed').length,
+    cancelled: appointments.filter((a) => a.status === 'cancelled').length,
+  };
+  const filteredAppointments = appointmentFilter === 'all'
+    ? appointments
+    : appointments.filter((a) => a.status === appointmentFilter);
 
   const statusBadge = {
     new: 'bg-accent/15 text-accent',
@@ -541,11 +553,31 @@ const Admin = () => {
             {activeTab === 'appointments' && (
               <div>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Appointments</h2>
-                {appointments.length === 0 && (
-                  <p className="text-muted-foreground">No appointments yet.</p>
-                )}
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setAppointmentFilter(f)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
+                        appointmentFilter === f
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      data-testid={`appointment-filter-${f}`}
+                    >
+                      {f} ({appointmentCounts[f]})
+                    </button>
+                  ))}
+                </div>
+
+                {filteredAppointments.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    {appointments.length === 0 ? 'No appointments yet.' : `No ${appointmentFilter} appointments.`}
+                  </p>
+                ) : (
                 <div className="space-y-4">
-                  {appointments.map((appt) => (
+                  {filteredAppointments.map((appt) => (
                     <div key={appt.appointment_id} className="border border-border rounded-xl p-4" data-testid={`appointment-${appt.appointment_id}`}>
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
                         <div>
@@ -591,6 +623,7 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
 
