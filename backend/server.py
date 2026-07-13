@@ -461,41 +461,81 @@ async def register(request: Request, response: Response, register_data: Register
     result["session_token"] = session_token
     return result
 
+CONTENT_TYPE_BY_EXT = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
+
 @api_router.post("/upload")
 async def upload_image(request: Request, file: UploadFile = File(...), session_token: Optional[str] = Cookie(None)):
-    """Upload a service image file and return its public URL."""
+    """Upload a service image. Stored in MongoDB (persistent) rather than the
+    local disk, which is ephemeral on Render and wipes files on restart."""
     await require_admin(request, session_token)
 
-    allowed_extensions = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
     upload_filename = Path(file.filename).name
     extension = Path(upload_filename).suffix.lower()
-    if extension not in allowed_extensions:
+    if extension not in CONTENT_TYPE_BY_EXT:
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
-    dest_filename = f"{uuid.uuid4().hex}{extension}"
-    dest_path = UPLOADS_DIR / dest_filename
-
     contents = await file.read()
-    with open(dest_path, "wb") as buffer:
-        buffer.write(contents)
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Image too large (max 5MB)")
 
+    file_id = uuid.uuid4().hex
+    # Trust our own extension->type map, NOT the client-supplied file.content_type
+    # (which could be text/html and lead to stored XSS when served back).
+    content_type = CONTENT_TYPE_BY_EXT[extension]
+    await db.uploads.insert_one({
+        "file_id": file_id,
+        "filename": upload_filename,
+        "content_type": content_type,
+        "data": contents,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    # Build an absolute https URL (honor the proxy's forwarded scheme so we
+    # never hand back an http URL that would be blocked as mixed content).
+    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
     host_header = request.headers.get("host") or "localhost:8000"
-    scheme = request.url.scheme
-    image_url = f"{scheme}://{host_header}/uploads/{dest_filename}"
+    image_url = f"{scheme}://{host_header}/api/uploads/{file_id}"
     return {"url": image_url}
 
-@api_router.delete("/upload/{filename}")
-async def delete_uploaded_image(filename: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    """Delete an uploaded service image file."""
+@api_router.get("/uploads/{file_id}")
+async def get_uploaded_image(file_id: str):
+    """Serve an uploaded image from MongoDB (public)."""
+    doc = await db.uploads.find_one({"file_id": file_id})
+    if not doc or "data" not in doc:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Never serve an arbitrary/tampered content type: clamp to the image allowlist.
+    media_type = doc.get("content_type")
+    if media_type not in CONTENT_TYPE_BY_EXT.values():
+        media_type = "application/octet-stream"
+
+    return Response(
+        content=bytes(doc["data"]),
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Content-Disposition": "inline",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; img-src 'self'; sandbox",
+        },
+    )
+
+@api_router.delete("/upload/{file_id}")
+async def delete_uploaded_image(file_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete an uploaded image (admin only)."""
     await require_admin(request, session_token)
 
-    safe_filename = Path(filename).name
-    file_path = UPLOADS_DIR / safe_filename
-    if not file_path.exists() or not file_path.is_file():
+    result = await db.uploads.delete_one({"file_id": file_id})
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="File not found")
-
-    file_path.unlink()
-    return {"deleted": True, "filename": safe_filename}
+    return {"deleted": True, "file_id": file_id}
 
 # ============ SERVICES ENDPOINTS ============
 
