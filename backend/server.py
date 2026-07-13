@@ -9,8 +9,7 @@ import json
 import logging
 import smtplib
 import ssl
-import urllib.request
-import urllib.error
+import http.client
 from email.message import EmailMessage
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -91,38 +90,51 @@ logging.info(f'Using secure cookies: {USE_SECURE_COOKIES} (SameSite={COOKIE_SAME
 # Preferred transport is an HTTPS email API (Brevo) because PaaS hosts such as
 # Render block/route-fail outbound SMTP ("[Errno 101] Network is unreachable").
 # Falls back to SMTP if only SMTP is configured (e.g. local/other hosts).
-BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+def _clean(value):
+    """Trim surrounding whitespace/newlines from env values (a common paste bug)."""
+    return value.strip() if isinstance(value, str) else value
+
+
+BREVO_API_KEY = _clean(os.getenv('BREVO_API_KEY')) or None
 SENDER_NAME = os.getenv('SENDER_NAME', "Priiyanka's Nature Nest")
 
-SMTP_HOST = os.getenv('SMTP_HOST')
+SMTP_HOST = _clean(os.getenv('SMTP_HOST'))
 SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
-SMTP_USER = os.getenv('SMTP_USER')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+SMTP_USER = _clean(os.getenv('SMTP_USER'))
+SMTP_PASSWORD = _clean(os.getenv('SMTP_PASSWORD'))
 # Sender address used for both transports (must be a verified sender in Brevo):
-SMTP_FROM = os.getenv('SMTP_FROM') or os.getenv('SENDER_EMAIL') or SMTP_USER
+SMTP_FROM = _clean(os.getenv('SMTP_FROM') or os.getenv('SENDER_EMAIL') or SMTP_USER)
 # Where contact-form / new-booking notifications are sent (the practitioner):
-ADMIN_NOTIFY_EMAIL = os.getenv('ADMIN_NOTIFY_EMAIL', 'priiyankasingh87@gmail.com')
+ADMIN_NOTIFY_EMAIL = _clean(os.getenv('ADMIN_NOTIFY_EMAIL', 'priiyankasingh87@gmail.com'))
 
 
 def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
+    # Masked diagnostic so we can confirm the loaded key without exposing it.
+    logging.info(
+        f"[email] Brevo send via key '{(BREVO_API_KEY or '')[:8]}...' "
+        f"(len={len(BREVO_API_KEY or '')}), from={SMTP_FROM}"
+    )
     payload = json.dumps({
         "sender": {"name": SENDER_NAME, "email": SMTP_FROM},
         "to": [{"email": to_address}],
         "subject": subject,
         "textContent": body,
     }).encode("utf-8")
-    req = urllib.request.Request(
-        "https://api.brevo.com/v3/smtp/email",
-        data=payload,
-        headers={
+    # Use http.client so the 'api-key' header keeps its exact lowercase case
+    # (urllib capitalizes header names, which some gateways reject).
+    conn = http.client.HTTPSConnection("api.brevo.com", timeout=15)
+    try:
+        conn.request("POST", "/v3/smtp/email", body=payload, headers={
             "api-key": BREVO_API_KEY,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        resp.read()
+            "content-type": "application/json",
+            "accept": "application/json",
+        })
+        resp = conn.getresponse()
+        data = resp.read().decode("utf-8", "ignore")
+        if resp.status >= 400:
+            raise RuntimeError(f"Brevo HTTP {resp.status}: {data}")
+    finally:
+        conn.close()
 
 
 def _send_via_smtp(to_address: str, subject: str, body: str) -> None:
@@ -160,9 +172,6 @@ def send_email(to_address: str, subject: str, body: str) -> None:
             logging.info(f"[email] Skipped (no transport configured): {subject}")
             return
         logging.info(f"[email] Sent '{subject}' to {to_address}")
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", "ignore")
-        logging.error(f"[email] Brevo HTTP {e.code} sending '{subject}' to {to_address}: {detail}")
     except Exception as e:
         logging.error(f"[email] Failed to send '{subject}' to {to_address}: {e}")
 
