@@ -20,6 +20,7 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [messageFilter, setMessageFilter] = useState('all');
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
@@ -194,6 +195,18 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm('Delete this message? This cannot be undone.')) return;
+    try {
+      await axios.delete(`${API}/admin/contact/${messageId}`, { withCredentials: true });
+      toast.success('Message deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Failed to delete message');
+    }
+  };
+
   const handleUpdateUserRole = async (userId, role) => {
     try {
       await axios.put(
@@ -210,6 +223,22 @@ const Admin = () => {
   };
 
   if (!user || user.role !== 'admin') return null;
+
+  const messageCounts = {
+    all: messages.length,
+    new: messages.filter((m) => m.status === 'new').length,
+    read: messages.filter((m) => m.status === 'read').length,
+    handled: messages.filter((m) => m.status === 'handled').length,
+  };
+  const filteredMessages = messageFilter === 'all'
+    ? messages
+    : messages.filter((m) => m.status === messageFilter);
+
+  const statusBadge = {
+    new: 'bg-accent/15 text-accent',
+    read: 'bg-secondary/15 text-secondary',
+    handled: 'bg-primary/10 text-primary',
+  };
 
   return (
     <div className="min-h-screen py-20 bg-muted">
@@ -643,16 +672,39 @@ const Admin = () => {
             {activeTab === 'messages' && (
               <div>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Contact Messages</h2>
-                {messages.length === 0 ? (
-                  <p className="text-muted-foreground">No messages yet.</p>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {['all', 'new', 'read', 'handled'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setMessageFilter(f)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
+                        messageFilter === f
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      data-testid={`message-filter-${f}`}
+                    >
+                      {f} ({messageCounts[f]})
+                    </button>
+                  ))}
+                </div>
+
+                {filteredMessages.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    {messages.length === 0 ? 'No messages yet.' : `No ${messageFilter} messages.`}
+                  </p>
                 ) : (
                   <div className="space-y-4">
-                    {messages.map((msg) => (
+                    {filteredMessages.map((msg) => (
                       <div key={msg.message_id} className="border border-border rounded-xl p-4" data-testid={`message-${msg.message_id}`}>
                         <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
                           <div>
-                            <p className="font-semibold text-foreground">
+                            <p className="font-semibold text-foreground flex items-center gap-2">
                               {msg.name}
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusBadge[msg.status] || 'bg-muted text-muted-foreground'}`}>
+                                {msg.status}
+                              </span>
                               {msg.subject && <span className="text-muted-foreground font-normal"> — {msg.subject}</span>}
                             </p>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
@@ -663,16 +715,27 @@ const Admin = () => {
                               <span>{new Date(msg.created_at).toLocaleString()}</span>
                             </div>
                           </div>
-                          <select
-                            value={msg.status}
-                            onChange={(e) => handleUpdateMessageStatus(msg.message_id, e.target.value)}
-                            className="px-4 py-2 rounded-lg border border-border bg-background"
-                            data-testid={`message-status-${msg.message_id}`}
-                          >
-                            <option value="new">New</option>
-                            <option value="read">Read</option>
-                            <option value="handled">Handled</option>
-                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={msg.status}
+                              onChange={(e) => handleUpdateMessageStatus(msg.message_id, e.target.value)}
+                              className="px-4 py-2 rounded-lg border border-border bg-background"
+                              data-testid={`message-status-${msg.message_id}`}
+                            >
+                              <option value="new">New</option>
+                              <option value="read">Read</option>
+                              <option value="handled">Handled</option>
+                            </select>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteMessage(msg.message_id)}
+                              aria-label="Delete message"
+                              data-testid={`delete-message-${msg.message_id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-sm text-foreground whitespace-pre-wrap mt-2">{msg.message}</p>
                       </div>

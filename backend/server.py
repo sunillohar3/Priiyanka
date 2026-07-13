@@ -760,6 +760,17 @@ async def update_contact_status(message_id: str, status: str, request: Request, 
 
     return {"message": "Message status updated"}
 
+@api_router.delete("/admin/contact/{message_id}")
+async def delete_contact_message(message_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete a contact message (admin only)."""
+    await require_admin(request, session_token)
+
+    result = await db.contact_messages.delete_one({"message_id": message_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    return {"deleted": True, "message_id": message_id}
+
 # ============ ROOT ============
 
 @api_router.get("/")
