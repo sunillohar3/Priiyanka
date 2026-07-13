@@ -1,0 +1,59 @@
+name: Deploy Frontend to Hostinger
+
+# Builds the React app and uploads it to Hostinger over FTP on every push to
+# main that touches the frontend. The backend deploys separately via Render's
+# own GitHub auto-deploy, so this workflow only handles the frontend.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch: {}   # allows manual "Run workflow" from the Actions tab
+
+# Least privilege: this workflow only needs to read the repo to build it.
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        env:
+          # Bake in the production API URL regardless of any local .env files.
+          REACT_APP_BACKEND_URL: https://priiyanka.onrender.com/api
+        run: npm run build
+
+      - name: Deploy to Hostinger via FTP
+        # Pinned to a full commit SHA (supply-chain safety); comment tracks the tag.
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Encrypted transport. Hostinger supports explicit FTPS on port 21.
+          # If your account somehow lacks FTPS, use 'ftps-legacy'; avoid plain 'ftp'.
+          protocol: ftps
+          local-dir: ./frontend/build/
+          # Must end with a slash. Use "./" if the FTP account's home IS the
+          # document root; otherwise the full docroot path (e.g. /public_html/).
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # Don't wipe the whole remote first; sync incrementally.
+          dangerous-clean-slate: false
