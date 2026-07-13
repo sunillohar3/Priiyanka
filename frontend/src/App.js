@@ -6,6 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import CookieConsent from './components/CookieConsent';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import About from './pages/About';
@@ -52,6 +53,7 @@ function App() {
           <CartProvider>
             <Toaster position="top-right" richColors />
             <AppRouter />
+            <CookieConsent />
           </CartProvider>
         </LanguageProvider>
       </AuthProvider>

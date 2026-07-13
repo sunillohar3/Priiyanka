@@ -39,6 +39,9 @@ jobs:
         env:
           # Bake in the production API URL regardless of any local .env files.
           REACT_APP_BACKEND_URL: https://priiyanka.onrender.com/api
+          # Optional: set a repo variable REACT_APP_GA_ID (e.g. G-XXXXXXXXXX) to
+          # enable Google Analytics + the cookie-consent banner. Leave unset to disable.
+          REACT_APP_GA_ID: ${{ vars.REACT_APP_GA_ID }}
         run: npm run build
 
       - name: Deploy to Hostinger via FTP

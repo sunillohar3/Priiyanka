@@ -53,7 +53,7 @@ const Home = () => {
       <section
         className="relative h-[80dvh] flex items-center justify-center overflow-hidden"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1685881050089-746db3e93938?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGZvcmVzdCUyMHN1bmxpZ2h0JTIwbmF0dXJlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzAxMzI0NDN8MA&ixlib=rb-4.1.0&q=85)',
+          backgroundImage: 'url(https://images.unsplash.com/photo-1685881050089-746db3e93938?crop=entropy&cs=srgb&fm=webp&w=1920&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGZvcmVzdCUyMHN1bmxpZ2h0JTIwbmF0dXJlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzAxMzI0NDN8MA&ixlib=rb-4.1.0&q=78)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}

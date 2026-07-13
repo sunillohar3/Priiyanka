@@ -131,11 +131,16 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className={`flex items-center gap-3 ${focusRing}`} data-testid="logo-link">
-            <img
-              src="/assets/logo.png"
-              alt="Priiyanka's Nature Nest logo"
-              className="h-16 w-auto object-contain"
-            />
+            <picture>
+              <source srcSet="/assets/logo.webp" type="image/webp" />
+              <img
+                src="/assets/logo.png"
+                alt="Priiyanka's Nature Nest logo"
+                width="951"
+                height="591"
+                className="h-16 w-auto object-contain"
+              />
+            </picture>
             <div className="text-2xl font-bold text-primary hidden sm:block">
               Priiyanka's Nature Nest
             </div>
