@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request, UploadFile, File, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -6,6 +6,9 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
@@ -77,6 +80,47 @@ COOKIE_SAMESITE = 'none' if USE_SECURE_COOKIES else 'lax'
 
 logging.info(f'Allowed CORS origins: {allowed_origins}')
 logging.info(f'Using secure cookies: {USE_SECURE_COOKIES} (SameSite={COOKIE_SAMESITE})')
+
+# ============ EMAIL CONFIG ============
+# Email is best-effort: if SMTP is not configured, sends are skipped (logged),
+# and no request ever fails because of email.
+SMTP_HOST = os.getenv('SMTP_HOST')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
+SMTP_USER = os.getenv('SMTP_USER')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+SMTP_FROM = os.getenv('SMTP_FROM') or SMTP_USER
+# Where contact-form / new-booking notifications are sent (the practitioner):
+ADMIN_NOTIFY_EMAIL = os.getenv('ADMIN_NOTIFY_EMAIL', 'priiyankasingh87@gmail.com')
+
+
+def send_email(to_address: str, subject: str, body: str) -> None:
+    """Send a plain-text email. Best-effort: never raises to the caller."""
+    if not (SMTP_HOST and SMTP_FROM and to_address):
+        logging.info(f"[email] Skipped (SMTP not configured or no recipient): {subject}")
+        return
+    try:
+        msg = EmailMessage()
+        msg['From'] = SMTP_FROM
+        msg['To'] = to_address
+        msg['Subject'] = subject
+        msg.set_content(body)
+
+        if SMTP_PORT == 465:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=15) as server:
+                if SMTP_USER and SMTP_PASSWORD:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+                server.starttls(context=ssl.create_default_context())
+                if SMTP_USER and SMTP_PASSWORD:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                server.send_message(msg)
+        logging.info(f"[email] Sent '{subject}' to {to_address}")
+    except Exception as e:
+        logging.error(f"[email] Failed to send '{subject}' to {to_address}: {e}")
+
 
 api_router = APIRouter(prefix="/api")
 
@@ -258,26 +302,28 @@ async def logout(request: Request, response: Response, session_token: Optional[s
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully"}
 
-@api_router.post("/auth/login", response_model=UserOut)
+@api_router.post("/auth/login")
 async def login(request: Request, response: Response, login_data: LoginRequest):
-    """Login with email and password"""
+    """Login with email and password. Returns the user plus a session token
+    (also set as an httpOnly cookie) so the client can use either cookie- or
+    header-based auth."""
     user = await db.users.find_one({"email": login_data.email})
     if not user or not bcrypt.checkpw(login_data.password.encode('utf-8'), user['password'].encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     # Create session
     session_token = str(uuid.uuid4())
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-    
+
     session_data = UserSession(
         user_id=user['user_id'],
         session_token=session_token,
         expires_at=expires_at,
         created_at=datetime.now(timezone.utc)
     )
-    
+
     await db.user_sessions.insert_one(session_data.dict())
-    
+
     response.set_cookie(
         key="session_token",
         value=session_token,
@@ -286,10 +332,12 @@ async def login(request: Request, response: Response, login_data: LoginRequest):
         samesite=COOKIE_SAMESITE,
         max_age=60*60*24*7  # 7 days
     )
-    
-    return UserOut(**user)
 
-@api_router.post("/auth/register", response_model=UserOut)
+    result = UserOut(**user).model_dump()
+    result["session_token"] = session_token
+    return result
+
+@api_router.post("/auth/register")
 async def register(request: Request, response: Response, register_data: RegisterRequest):
     """Register new user with email and password"""
     existing_user = await db.users.find_one({"email": register_data.email})
@@ -335,8 +383,10 @@ async def register(request: Request, response: Response, register_data: Register
         samesite=COOKIE_SAMESITE,
         max_age=60*60*24*7  # 7 days
     )
-    
-    return UserOut(**user_data.model_dump())
+
+    result = UserOut(**user_data.model_dump()).model_dump()
+    result["session_token"] = session_token
+    return result
 
 @api_router.post("/upload")
 async def upload_image(request: Request, file: UploadFile = File(...), session_token: Optional[str] = Cookie(None)):
@@ -463,10 +513,22 @@ async def get_bookings(request: Request, session_token: Optional[str] = Cookie(N
     return bookings
 
 @api_router.post("/bookings", response_model=Booking)
-async def create_booking(booking_data: BookingCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    """Create booking"""
+async def create_booking(booking_data: BookingCreate, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
+    """Create booking (rejects a slot that is already taken)."""
     user = await get_current_user(request, session_token)
-    
+
+    # Prevent double-booking: same date + time not already reserved (unless cancelled).
+    existing = await db.bookings.find_one({
+        "booking_date": booking_data.booking_date,
+        "booking_time": booking_data.booking_time,
+        "status": {"$ne": "cancelled"}
+    })
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="That time slot is already booked. Please choose another time."
+        )
+
     booking_id = f"booking_{uuid.uuid4().hex[:12]}"
     booking_doc = {
         "booking_id": booking_id,
@@ -476,9 +538,28 @@ async def create_booking(booking_data: BookingCreate, request: Request, session_
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.bookings.insert_one(booking_doc)
-    
+
     result = await db.bookings.find_one({"booking_id": booking_id}, {"_id": 0})
     result['created_at'] = datetime.fromisoformat(result['created_at'])
+
+    # Notify practitioner + confirm to client (best-effort, off the request path).
+    when = f"{booking_data.booking_date} at {booking_data.booking_time}"
+    background_tasks.add_task(
+        send_email,
+        ADMIN_NOTIFY_EMAIL,
+        "New booking request",
+        f"New booking from {user.name} ({user.email}).\n"
+        f"Service ID: {booking_data.service_id}\nWhen: {when}\n"
+        f"Notes: {booking_data.notes or '-'}"
+    )
+    background_tasks.add_task(
+        send_email,
+        user.email,
+        "Your appointment request - Priiyanka's Nature Nest",
+        f"Dear {user.name},\n\nWe have received your appointment request for {when}.\n"
+        f"We will confirm it shortly.\n\nWarm regards,\nPriiyanka's Nature Nest"
+    )
+
     return Booking(**result)
 
 @api_router.put("/bookings/{booking_id}")
@@ -566,7 +647,7 @@ async def update_user_role(user_id: str, role: str, request: Request, session_to
 # ============ CONTACT ENDPOINTS ============
 
 @api_router.post("/contact", response_model=ContactMessage)
-async def create_contact_message(contact_data: ContactCreate):
+async def create_contact_message(contact_data: ContactCreate, background_tasks: BackgroundTasks):
     """Submit a contact / inquiry message (public)."""
     email = contact_data.email.strip()
     if "@" not in email or "." not in email.split("@")[-1]:
@@ -584,6 +665,16 @@ async def create_contact_message(contact_data: ContactCreate):
 
     result = await db.contact_messages.find_one({"message_id": message_id}, {"_id": 0})
     result['created_at'] = datetime.fromisoformat(result['created_at'])
+
+    # Notify the practitioner of the new inquiry (best-effort).
+    background_tasks.add_task(
+        send_email,
+        ADMIN_NOTIFY_EMAIL,
+        f"New contact message: {contact_data.subject or '(no subject)'}",
+        f"From: {contact_data.name} <{email}>\n"
+        f"Phone: {contact_data.phone or '-'}\n\n{contact_data.message}"
+    )
+
     return ContactMessage(**result)
 
 @api_router.get("/admin/contact", response_model=List[ContactMessage])

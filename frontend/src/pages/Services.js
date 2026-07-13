@@ -4,12 +4,22 @@ import { Button } from '../components/ui/button';
 import { ShoppingCart, Clock, Euro, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
+import { useSEO } from '../hooks/useSEO';
 import { toast } from 'sonner';
 import API from '../lib/api';
 
 const Services = () => {
   const { t, language } = useLanguage();
   const { addToCart, isInCart } = useCart();
+
+  useSEO(
+    language === 'en'
+      ? "Services & Treatments | Priiyanka's Nature Nest"
+      : "Diensten & Behandelingen | Priiyanka's Nature Nest",
+    language === 'en'
+      ? 'Ayurvedic consultations, Abhyanga massage, Panchakarma detox, and therapeutic treatments in Voorburg.'
+      : 'Ayurvedische consulten, Abhyanga-massage, Panchakarma-detox en therapeutische behandelingen in Voorburg.'
+  );
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,13 +88,13 @@ const Services = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((service) => (
-              <div 
-                key={service.service_id} 
-                className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-border group"
+              <div
+                key={service.service_id}
+                className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-border group flex flex-col h-full"
                 data-testid={`service-card-${service.service_id}`}
               >
                 {service.image_url && (
-                  <div className="h-48 overflow-hidden">
+                  <div className="h-48 overflow-hidden flex-shrink-0">
                     <img
                       src={service.image_url}
                       alt={language === 'en' ? service.name_en : service.name_nl}
@@ -94,15 +104,15 @@ const Services = () => {
                     />
                   </div>
                 )}
-                <div className="p-6">
+                <div className="p-6 flex flex-col flex-1">
                   <h3 className="text-2xl font-heading font-semibold text-foreground mb-2">
                     {language === 'en' ? service.name_en : service.name_nl}
                   </h3>
-                  <p className="text-muted-foreground mb-6 line-clamp-2">
+                  <p className="text-muted-foreground mb-6">
                     {language === 'en' ? service.description_en : service.description_nl}
                   </p>
-                  
-                  <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
+
+                  <div className="flex items-center gap-4 mb-6 mt-auto text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       <span>{service.duration} {t('services.minutes')}</span>

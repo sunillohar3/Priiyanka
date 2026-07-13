@@ -112,10 +112,11 @@ const Cart = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Checkout error:', error);
+      const detail = error?.response?.data?.detail;
       toast.error(
-        language === 'en'
+        detail || (language === 'en'
           ? 'Failed to complete checkout. Please try again.'
-          : 'Kan afrekenen niet voltooien. Probeer het opnieuw.'
+          : 'Kan afrekenen niet voltooien. Probeer het opnieuw.')
       );
     } finally {
       setProcessing(false);

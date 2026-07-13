@@ -3,9 +3,19 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Leaf, Clock, Shield, Heart } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSEO } from '../hooks/useSEO';
 
 const Home = () => {
   const { t, language } = useLanguage();
+
+  useSEO(
+    language === 'en'
+      ? "Priiyanka's Nature Nest | Ayurvedic Wellness in Voorburg"
+      : "Priiyanka's Nature Nest | Ayurvedische Wellness in Voorburg",
+    language === 'en'
+      ? 'Authentic Ayurvedic care, Panchakarma therapies and holistic consultations in Voorburg, Netherlands. LVNT-registered practitioner.'
+      : 'Authentieke Ayurvedische zorg, Panchakarma-therapieën en holistische consulten in Voorburg, Nederland. LVNT-geregistreerd.'
+  );
 
   const features = [
     {

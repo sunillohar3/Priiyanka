@@ -16,6 +16,7 @@ import Admin from './pages/Admin';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Suggestions from './pages/Suggestions';
+import NotFound from './pages/NotFound';
 import './App.css';
 
 function AppRouter() {
@@ -36,6 +37,7 @@ function AppRouter() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/complaint" element={<Suggestions />} />
         <Route path="/suggestions" element={<Suggestions />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </>

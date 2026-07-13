@@ -1,9 +1,19 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSEO } from '../hooks/useSEO';
 import { Award, BookOpen, Shield } from 'lucide-react';
 
 const About = () => {
   const { language } = useLanguage();
+
+  useSEO(
+    language === 'en'
+      ? "About VD. Priyanka Singh | Ayurvedic Consultant"
+      : "Over VD. Priyanka Singh | Ayurvedisch Consultant",
+    language === 'en'
+      ? 'B.A.M.S Ayurvedic physician with 13+ years of clinical experience, practicing holistic Ayurvedic care in Voorburg, Netherlands.'
+      : 'B.A.M.S Ayurvedisch arts met 13+ jaar klinische ervaring, holistische Ayurvedische zorg in Voorburg, Nederland.'
+  );
 
   return (
     <div className="min-h-screen py-20">

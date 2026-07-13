@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSEO } from '../hooks/useSEO';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -12,6 +13,15 @@ import API from '../lib/api';
 const Contact = () => {
   const { t, language } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
+
+  useSEO(
+    language === 'en'
+      ? "Contact | Priiyanka's Nature Nest, Voorburg"
+      : "Contact | Priiyanka's Nature Nest, Voorburg",
+    language === 'en'
+      ? 'Get in touch to book an Ayurvedic consultation or treatment in Voorburg. Address, phone, email and enquiry form.'
+      : 'Neem contact op voor een Ayurvedisch consult of behandeling in Voorburg. Adres, telefoon, e-mail en contactformulier.'
+  );
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
 
   const handleChange = (e) => {

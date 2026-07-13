@@ -94,10 +94,9 @@ const BookingModal = ({ service, trigger, onConfirm, initialData, confirmLabel }
       setIsOpen(false);
     } catch (error) {
       console.error('Booking error:', error);
+      const detail = error?.response?.data?.detail;
       toast.error(
-        language === 'en'
-          ? 'Failed to book appointment'
-          : 'Kan afspraak niet boeken'
+        detail || (language === 'en' ? 'Failed to book appointment' : 'Kan afspraak niet boeken')
       );
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const LanguageContext = createContext();
 
@@ -175,6 +175,10 @@ export const translations = {
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState('nl');
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const t = (key) => {
     const keys = key.split('.');
