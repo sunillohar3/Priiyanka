@@ -1167,6 +1167,12 @@ async def delete_contact_message(message_id: str, request: Request, session_toke
 async def root():
     return {"message": "Priiyanka's Nature Nest API"}
 
+@api_router.api_route("/health", methods=["GET", "HEAD"])
+async def health():
+    """Lightweight liveness check (no DB). Answers GET and HEAD so uptime
+    monitors (which default to HEAD) can keep the instance warm."""
+    return {"status": "ok"}
+
 @api_router.get("/db-status")
 async def db_status():
     """Check MongoDB Atlas connectivity."""
