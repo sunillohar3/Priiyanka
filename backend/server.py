@@ -5,9 +5,12 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import json
 import logging
 import smtplib
 import ssl
+import urllib.request
+import urllib.error
 from email.message import EmailMessage
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -82,42 +85,84 @@ logging.info(f'Allowed CORS origins: {allowed_origins}')
 logging.info(f'Using secure cookies: {USE_SECURE_COOKIES} (SameSite={COOKIE_SAMESITE})')
 
 # ============ EMAIL CONFIG ============
-# Email is best-effort: if SMTP is not configured, sends are skipped (logged),
+# Email is best-effort: if nothing is configured, sends are skipped (logged),
 # and no request ever fails because of email.
+#
+# Preferred transport is an HTTPS email API (Brevo) because PaaS hosts such as
+# Render block/route-fail outbound SMTP ("[Errno 101] Network is unreachable").
+# Falls back to SMTP if only SMTP is configured (e.g. local/other hosts).
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+SENDER_NAME = os.getenv('SENDER_NAME', "Priiyanka's Nature Nest")
+
 SMTP_HOST = os.getenv('SMTP_HOST')
 SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
 SMTP_USER = os.getenv('SMTP_USER')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
-SMTP_FROM = os.getenv('SMTP_FROM') or SMTP_USER
+# Sender address used for both transports (must be a verified sender in Brevo):
+SMTP_FROM = os.getenv('SMTP_FROM') or os.getenv('SENDER_EMAIL') or SMTP_USER
 # Where contact-form / new-booking notifications are sent (the practitioner):
 ADMIN_NOTIFY_EMAIL = os.getenv('ADMIN_NOTIFY_EMAIL', 'priiyankasingh87@gmail.com')
 
 
+def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
+    payload = json.dumps({
+        "sender": {"name": SENDER_NAME, "email": SMTP_FROM},
+        "to": [{"email": to_address}],
+        "subject": subject,
+        "textContent": body,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={
+            "api-key": BREVO_API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        resp.read()
+
+
+def _send_via_smtp(to_address: str, subject: str, body: str) -> None:
+    msg = EmailMessage()
+    msg['From'] = SMTP_FROM
+    msg['To'] = to_address
+    msg['Subject'] = subject
+    msg.set_content(body)
+    if SMTP_PORT == 465:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=15) as server:
+            if SMTP_USER and SMTP_PASSWORD:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+            server.starttls(context=ssl.create_default_context())
+            if SMTP_USER and SMTP_PASSWORD:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+
+
 def send_email(to_address: str, subject: str, body: str) -> None:
-    """Send a plain-text email. Best-effort: never raises to the caller."""
-    if not (SMTP_HOST and SMTP_FROM and to_address):
-        logging.info(f"[email] Skipped (SMTP not configured or no recipient): {subject}")
+    """Send a plain-text email. Best-effort: never raises to the caller.
+    Prefers the Brevo HTTPS API (works on Render); falls back to SMTP."""
+    if not (to_address and SMTP_FROM):
+        logging.info(f"[email] Skipped (no sender/recipient configured): {subject}")
         return
     try:
-        msg = EmailMessage()
-        msg['From'] = SMTP_FROM
-        msg['To'] = to_address
-        msg['Subject'] = subject
-        msg.set_content(body)
-
-        if SMTP_PORT == 465:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=15) as server:
-                if SMTP_USER and SMTP_PASSWORD:
-                    server.login(SMTP_USER, SMTP_PASSWORD)
-                server.send_message(msg)
+        if BREVO_API_KEY:
+            _send_via_brevo(to_address, subject, body)
+        elif SMTP_HOST:
+            _send_via_smtp(to_address, subject, body)
         else:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-                server.starttls(context=ssl.create_default_context())
-                if SMTP_USER and SMTP_PASSWORD:
-                    server.login(SMTP_USER, SMTP_PASSWORD)
-                server.send_message(msg)
+            logging.info(f"[email] Skipped (no transport configured): {subject}")
+            return
         logging.info(f"[email] Sent '{subject}' to {to_address}")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "ignore")
+        logging.error(f"[email] Brevo HTTP {e.code} sending '{subject}' to {to_address}: {detail}")
     except Exception as e:
         logging.error(f"[email] Failed to send '{subject}' to {to_address}: {e}")
 
