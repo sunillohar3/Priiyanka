@@ -187,7 +187,7 @@ const Contact = () => {
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                   <p className="text-muted-foreground">
                     Badhuisstraat 224<br />
-                    2584 HN, The Hague
+                    2584 HN
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
