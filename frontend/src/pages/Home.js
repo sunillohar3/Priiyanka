@@ -118,8 +118,8 @@ const Home = () => {
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
                 {language === 'en'
-                  ? 'VD. Priyanka Singh is a certified Ayurvedic consultant (B.A.M.S) with extensive training in traditional Ayurvedic medicine. As a registered member of LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten), she brings authentic Ayurvedic healing practices to the Netherlands.'
-                  : 'VD. Priyanka Singh is een gecertificeerde Ayurvedische consultant (B.A.M.S) met uitgebreide training in traditionele Ayurvedische geneeskunde. Als geregistreerd lid van LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten) brengt ze authentieke Ayurvedische genezingspraktijken naar Nederland.'}
+                  ? 'VD. Priiyanka Singh is a certified Ayurvedic consultant (B.A.M.S) with extensive training in traditional Ayurvedic medicine. As a registered member of LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten), she brings authentic Ayurvedic healing practices to the Netherlands.'
+                  : 'VD. Priiyanka Singh is een gecertificeerde Ayurvedische consultant (B.A.M.S) met uitgebreide training in traditionele Ayurvedische geneeskunde. Als geregistreerd lid van LVNT (Landelijke Vereniging Natuurgeneeskundig Therapeuten) brengt ze authentieke Ayurvedische genezingspraktijken naar Nederland.'}
               </p>
               <Link to="/about">
                 <Button variant="outline" className="rounded-full px-8">
@@ -130,7 +130,7 @@ const Home = () => {
             <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="/assets/profile.jpg"
-                alt="VD. Priyanka Singh - Ayurvedic Consultant"
+                alt="VD. Priiyanka Singh - Ayurvedic Consultant"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover"

@@ -28,7 +28,7 @@ const Suggestions = () => {
                 <ul className="list-disc pl-6 space-y-2">
                   <li>In person during your appointment</li>
                   <li>By phone: +31 623955935</li>
-                  <li>By email: priiyankasingh87@gmail.com</li>
+                  <li>By email: priiyankasnaturenest@gmail.com</li>
                 </ul>
               </section>
 
@@ -74,7 +74,7 @@ const Suggestions = () => {
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Persoonlijk tijdens uw afspraak</li>
                   <li>Per telefoon: +31 623955935</li>
-                  <li>Per e-mail: priiyankasingh87@gmail.com</li>
+                  <li>Per e-mail: priiyankasnaturenest@gmail.com</li>
                 </ul>
               </section>
 

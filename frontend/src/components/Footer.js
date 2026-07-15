@@ -14,7 +14,7 @@ const Footer = () => {
             <h3 className="font-heading text-xl font-bold mb-4">Priiyanka's Nature Nest</h3>
             <p className="text-sm text-primary-foreground/80 italic">"Where Nature Nurtures You"</p>
             <p className="text-sm text-primary-foreground/80 mt-4">
-              VD. Priyanka Singh<br />
+              VD. Priiyanka Singh<br />
               B.A.M.S Ayurvedic Consultant
             </p>
             <div className="mt-6 flex flex-wrap gap-3 items-center">
@@ -90,7 +90,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:priiyankasingh87@gmail.com" className="hover:text-accent">priiyankasingh87@gmail.com</a>
+                <a href="mailto:priiyankasnaturenest@gmail.com" className="hover:text-accent">priiyankasnaturenest@gmail.com</a>
               </div>
             </div>
           </div>

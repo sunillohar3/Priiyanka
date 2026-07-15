@@ -158,19 +158,48 @@ const Contact = () => {
 
           {/* Contact details */}
           <div className="space-y-8">
+            {/* Location 1 — Voorburg (address + hours) */}
             <div className="bg-card p-8 rounded-2xl border border-border">
-              <div className="flex items-start gap-4">
-                <MapPin className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-heading text-xl font-semibold text-foreground mb-2">{t('contact.address')}</h3>
+              <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc1Name')}</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                   <p className="text-muted-foreground">
                     Frans Mortelmansstraat 68<br />
                     Voorburg, Netherlands
                   </p>
                 </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                  <div className="text-muted-foreground space-y-1">
+                    <p>{t('contact.mondayFriday')}</p>
+                    <p>{t('contact.saturday')}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
+            {/* Location 2 — The Hague (address + hours) */}
+            <div className="bg-card p-8 rounded-2xl border border-border">
+              <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc2Name')}</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                  <p className="text-muted-foreground">
+                    Badhuisstraat 224<br />
+                    2584 HN, The Hague
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                  <div className="text-muted-foreground space-y-1">
+                    <p>{t('contact.loc2Hours')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Phone */}
             <div className="bg-card p-8 rounded-2xl border border-border">
               <div className="flex items-start gap-4">
                 <Phone className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
@@ -183,27 +212,15 @@ const Contact = () => {
               </div>
             </div>
 
+            {/* Email */}
             <div className="bg-card p-8 rounded-2xl border border-border">
               <div className="flex items-start gap-4">
                 <Mail className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-heading text-xl font-semibold text-foreground mb-2">{t('contact.email')}</h3>
-                  <a href="mailto:priiyankasingh87@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
-                    priiyankasingh87@gmail.com
+                  <a href="mailto:priiyankasnaturenest@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                    priiyankasnaturenest@gmail.com
                   </a>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl border border-border">
-              <div className="flex items-start gap-4">
-                <Clock className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-heading text-xl font-semibold text-foreground mb-2">{t('contact.hours')}</h3>
-                  <div className="text-muted-foreground space-y-1">
-                    <p>{t('contact.mondayFriday')}</p>
-                    <p>{t('contact.saturday')}</p>
-                  </div>
                 </div>
               </div>
             </div>

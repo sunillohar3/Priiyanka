@@ -146,7 +146,7 @@ REACT_APP_BACKEND_URL=http://localhost:8000/api
 - VAT number: NL005359083B24
 
 ### Business Details
-- **Therapist**: VD. Priyanka Singh (B.A.M.S)
+- **Therapist**: VD. Priiyanka Singh (B.A.M.S)
 - **Experience**: 13+ years clinical experience
 - **Location**: Frans Mortelmansstraat 68, Voorburg, Netherlands
 - **Phone**: +31 623955935

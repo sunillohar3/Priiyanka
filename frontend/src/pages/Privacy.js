@@ -65,7 +65,7 @@ const Privacy = () => {
               <section>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mt-8 mb-4">Contact</h2>
                 <p>
-                  For privacy-related questions, contact us at: priiyankasingh87@gmail.com
+                  For privacy-related questions, contact us at: priiyankasnaturenest@gmail.com
                 </p>
               </section>
             </>
@@ -122,7 +122,7 @@ const Privacy = () => {
               <section>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mt-8 mb-4">Contact</h2>
                 <p>
-                  Voor privacygerelateerde vragen, neem contact met ons op via: priiyankasingh87@gmail.com
+                  Voor privacygerelateerde vragen, neem contact met ons op via: priiyankasnaturenest@gmail.com
                 </p>
               </section>
             </>
