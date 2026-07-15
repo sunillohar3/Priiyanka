@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield, MessageSquare, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield, MessageSquare, Mail, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
@@ -23,6 +23,7 @@ const Admin = () => {
   const [appointmentFilter, setAppointmentFilter] = useState('all');
   const [blockedSlots, setBlockedSlots] = useState([]);
   const [blockForm, setBlockForm] = useState({ date: '', start_time: '', end_time: '', reason: '' });
+  const dragIndex = useRef(null);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
@@ -180,6 +181,31 @@ const Admin = () => {
       console.error('Error updating appointment:', error);
       toast.error('Failed to update appointment');
     }
+  };
+
+  const persistServiceOrder = async (arr) => {
+    try {
+      await axios.put(
+        `${API}/admin/services/reorder`,
+        { ordered_ids: arr.map((s) => s.service_id) },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error('Error saving order:', error);
+      toast.error('Failed to save new order');
+      fetchData();
+    }
+  };
+
+  const handleServiceDrop = (dropIndex) => {
+    const from = dragIndex.current;
+    dragIndex.current = null;
+    if (from === null || from === dropIndex) return;
+    const arr = [...services];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(dropIndex, 0, moved);
+    setServices(arr);
+    persistServiceOrder(arr);
   };
 
   const handleAddBlock = async (e) => {
@@ -576,14 +602,28 @@ const Admin = () => {
                   </form>
                 )}
 
+                {services.length > 1 && (
+                  <p className="text-sm text-muted-foreground mb-3">Drag rows to reorder how services appear on the site.</p>
+                )}
                 <div className="space-y-4">
-                  {services.map((service) => (
-                    <div key={service.service_id} className="border border-border rounded-xl p-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{service.name_en} / {service.name_nl}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          €{service.price} • {service.duration} min • {service.category}
-                        </p>
+                  {services.map((service, index) => (
+                    <div
+                      key={service.service_id}
+                      draggable
+                      onDragStart={() => { dragIndex.current = index; }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleServiceDrop(index)}
+                      className="border border-border rounded-xl p-4 flex items-center justify-between bg-card cursor-move"
+                      data-testid={`service-row-${service.service_id}`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <GripVertical className="w-5 h-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-foreground truncate">{service.name_en} / {service.name_nl}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            €{service.price} • {service.duration} min • {service.category}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button

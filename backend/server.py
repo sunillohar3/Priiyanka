@@ -267,6 +267,7 @@ class Service(BaseModel):
     duration: int
     category: str
     image_url: Optional[str] = None
+    display_order: int = 0
     created_at: datetime
 
 class ServiceCreate(BaseModel):
@@ -288,6 +289,10 @@ class ServiceUpdate(BaseModel):
     duration: Optional[int] = None
     category: Optional[str] = None
     image_url: Optional[str] = None
+    display_order: Optional[int] = None
+
+class ReorderRequest(BaseModel):
+    ordered_ids: List[str]
 
 class LoginRequest(BaseModel):
     email: str
@@ -687,12 +692,22 @@ async def delete_uploaded_image(file_id: str, request: Request, session_token: O
 
 @api_router.get("/services", response_model=List[Service])
 async def get_services():
-    """Get all services (public)"""
-    services = await db.services.find({}, {"_id": 0}).to_list(1000)
+    """Get all services (public), ordered by the admin-defined display_order."""
+    services = await db.services.find({}, {"_id": 0}).sort(
+        [("display_order", 1), ("created_at", 1)]
+    ).to_list(1000)
     for service in services:
         if isinstance(service['created_at'], str):
             service['created_at'] = datetime.fromisoformat(service['created_at'])
     return services
+
+@api_router.put("/admin/services/reorder")
+async def reorder_services(data: ReorderRequest, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Persist a new service display order from an ordered list of ids (admin only)."""
+    await require_admin(request, session_token)
+    for index, sid in enumerate(data.ordered_ids):
+        await db.services.update_one({"service_id": sid}, {"$set": {"display_order": index}})
+    return {"reordered": len(data.ordered_ids)}
 
 @api_router.get("/services/{service_id}", response_model=Service)
 async def get_service(service_id: str):
@@ -710,9 +725,12 @@ async def create_service(service_data: ServiceCreate, request: Request, session_
     await require_admin(request, session_token)
     
     service_id = f"service_{uuid.uuid4().hex[:12]}"
+    # New services go to the end of the current order.
+    count = await db.services.count_documents({})
     service_doc = {
         "service_id": service_id,
         **service_data.model_dump(),
+        "display_order": count,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.services.insert_one(service_doc)
