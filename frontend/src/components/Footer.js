@@ -84,6 +84,10 @@ const Footer = () => {
                 <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
                 <p>Frans Mortelmansstraat 68<br />Voorburg, Netherlands</p>
               </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+                <p>The Hague Natural Health Centre<br />Badhuisstraat 224, 2584 HN, The Hague</p>
+              </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
                 <a href="tel:+31623955935" className="hover:text-accent">+31 623955935</a>
