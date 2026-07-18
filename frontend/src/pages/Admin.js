@@ -394,10 +394,10 @@ const Admin = () => {
         </div>
 
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
-          <div className="flex border-b border-border">
+          <div className="flex overflow-x-auto border-b border-border">
             <button
               onClick={() => setActiveTab('services')}
-              className={`px-6 py-4 font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
                 activeTab === 'services'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -408,7 +408,7 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('appointments')}
-              className={`px-6 py-4 font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
                 activeTab === 'appointments'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -419,7 +419,7 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('availability')}
-              className={`px-6 py-4 font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
                 activeTab === 'availability'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -430,7 +430,7 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-6 py-4 font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
                 activeTab === 'users'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -441,7 +441,7 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`px-6 py-4 font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
                 activeTab === 'messages'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
