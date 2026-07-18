@@ -169,7 +169,7 @@ const Navbar = () => {
               <span className="font-heading text-xl font-bold text-primary tracking-tight">
                 Priiyanka's Nature Nest
               </span>
-              <span className="text-[11px] uppercase tracking-[0.2em] text-accent font-medium">
+              <span className="hidden lg:block whitespace-nowrap text-[11px] uppercase tracking-[0.2em] text-accent font-medium">
                 Where Nature Nurtures You
               </span>
             </div>
