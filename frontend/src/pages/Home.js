@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Leaf, Clock, Shield, Heart } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -67,12 +66,7 @@ const Home = () => {
       >
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
-        <motion.div
-          className="relative z-10 text-center px-6 max-w-4xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <Reveal className="relative z-10 text-center px-6 max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-heading font-bold text-white mb-6">{t('hero.title')}</h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8">{t('hero.subtitle')}</p>
           <Link to="/services">
@@ -80,7 +74,7 @@ const Home = () => {
               {t('hero.cta')}
             </Button>
           </Link>
-        </motion.div>
+        </Reveal>
       </section>
 
       <Section background="card">
