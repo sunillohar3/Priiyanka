@@ -11,6 +11,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
 import API from '../lib/api';
+import Reveal from '../components/common/Reveal';
+import Stagger from '../components/common/Stagger';
 
 const Cart = () => {
   const { cartItems, removeFromCart, getTotal, clearCart } = useCart();
@@ -75,17 +77,19 @@ const Cart = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen py-20 flex items-center justify-center">
-        <div className="text-center">
-          <ShoppingBag className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-          <h2 className="text-3xl font-heading font-bold text-foreground mb-4">
-            {t('cart.empty')}
-          </h2>
-          <Link to="/services">
-            <Button className="bg-primary text-primary-foreground hover:bg-secondary rounded-full px-8">
-              {t('cart.continueShopping')}
-            </Button>
-          </Link>
-        </div>
+        <Reveal>
+          <div className="text-center" data-testid="cart-empty">
+            <ShoppingBag className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
+            <h2 className="text-3xl font-heading font-bold text-foreground mb-4">
+              {t('cart.empty')}
+            </h2>
+            <Link to="/services">
+              <Button className="bg-primary text-primary-foreground hover:bg-secondary rounded-full px-8">
+                {t('cart.continueShopping')}
+              </Button>
+            </Link>
+          </div>
+        </Reveal>
       </div>
     );
   }
@@ -103,121 +107,124 @@ const Cart = () => {
         </p>
 
         {/* Selected treatments */}
-        <div className="space-y-4 mb-8">
+        <Stagger className="space-y-4 mb-8">
           {cartItems.map((item) => (
-            <div
-              key={item.service_id}
-              className="bg-card p-6 rounded-2xl border border-border flex items-center justify-between"
-              data-testid={`cart-item-${item.service_id}`}
-            >
-              <div className="flex-1">
-                <h3 className="text-xl font-heading font-semibold text-foreground">
-                  {language === 'en' ? item.name_en : item.name_nl}
-                </h3>
-                <p className="text-muted-foreground flex items-center gap-1 text-sm mt-1">
-                  <Clock className="w-4 h-4" />
-                  {item.duration} {t('services.minutes')}
-                </p>
+            <Reveal key={item.service_id}>
+              <div
+                className="bg-card p-6 rounded-2xl border border-border flex items-center justify-between"
+                data-testid={`cart-item-${item.service_id}`}
+              >
+                <div className="flex-1">
+                  <h3 className="text-xl font-heading font-semibold text-foreground">
+                    {language === 'en' ? item.name_en : item.name_nl}
+                  </h3>
+                  <p className="text-muted-foreground flex items-center gap-1 text-sm mt-1">
+                    <Clock className="w-4 h-4" />
+                    {item.duration} {t('services.minutes')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-6">
+                  <p className="text-xl font-bold text-primary flex items-center gap-1">
+                    <Euro className="w-5 h-5" />
+                    {item.price.toFixed(2)}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFromCart(item.service_id)}
+                    aria-label={language === 'en' ? `Remove ${item.name_en}` : `${item.name_nl} verwijderen`}
+                    data-testid={`remove-item-${item.service_id}`}
+                  >
+                    <Trash2 className="w-5 h-5 text-destructive" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-6">
-                <p className="text-xl font-bold text-primary flex items-center gap-1">
-                  <Euro className="w-5 h-5" />
-                  {item.price.toFixed(2)}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeFromCart(item.service_id)}
-                  aria-label={language === 'en' ? `Remove ${item.name_en}` : `${item.name_nl} verwijderen`}
-                  data-testid={`remove-item-${item.service_id}`}
-                >
-                  <Trash2 className="w-5 h-5 text-destructive" />
-                </Button>
-              </div>
-            </div>
+            </Reveal>
           ))}
-        </div>
+        </Stagger>
 
         {/* Appointment scheduling + summary */}
-        <div className="bg-muted p-8 rounded-2xl">
-          <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
-            {language === 'en' ? 'Choose your slot' : 'Kies uw tijdslot'}
-          </h2>
+        <Reveal>
+          <div className="bg-muted p-8 rounded-2xl">
+            <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
+              {language === 'en' ? 'Choose your slot' : 'Kies uw tijdslot'}
+            </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="space-y-2">
-              <Label htmlFor="appt-date" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {t('booking.selectDate')}
-              </Label>
-              <Input
-                id="appt-date"
-                type="date"
-                min={getMinDate()}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="appt-date" className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {t('booking.selectDate')}
+                </Label>
+                <Input
+                  id="appt-date"
+                  type="date"
+                  min={getMinDate()}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="appt-time" className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {t('booking.selectTime')}
+                </Label>
+                <Input
+                  id="appt-time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-6">
+              <Label htmlFor="appt-notes">{t('booking.notes')}</Label>
+              <Textarea
+                id="appt-notes"
+                rows={3}
+                placeholder={language === 'en' ? 'Any special requests or notes...' : 'Speciale verzoeken of opmerkingen...'}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="appt-time" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {t('booking.selectTime')}
-              </Label>
-              <Input
-                id="appt-time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                required
-              />
-            </div>
-          </div>
 
-          <div className="space-y-2 mb-6">
-            <Label htmlFor="appt-notes">{t('booking.notes')}</Label>
-            <Textarea
-              id="appt-notes"
-              rows={3}
-              placeholder={language === 'en' ? 'Any special requests or notes...' : 'Speciale verzoeken of opmerkingen...'}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          <div className="border-t border-border pt-6 space-y-2 mb-6">
-            <div className="flex items-center justify-between text-muted-foreground">
-              <span>{language === 'en' ? 'Total duration' : 'Totale duur'}</span>
-              <span className="font-medium">{totalDuration} {t('services.minutes')}</span>
+            <div className="border-t border-border pt-6 space-y-2 mb-6">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>{language === 'en' ? 'Total duration' : 'Totale duur'}</span>
+                <span className="font-medium">{totalDuration} {t('services.minutes')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-heading font-bold text-foreground">{t('cart.total')}</span>
+                <span className="text-3xl font-bold text-primary flex items-center gap-1">
+                  <Euro className="w-7 h-7" />
+                  {getTotal().toFixed(2)}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {language === 'en' ? 'Payable at the clinic.' : 'Te betalen in de praktijk.'}
+              </p>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-heading font-bold text-foreground">{t('cart.total')}</span>
-              <span className="text-3xl font-bold text-primary flex items-center gap-1">
-                <Euro className="w-7 h-7" />
-                {getTotal().toFixed(2)}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {language === 'en' ? 'Payable at the clinic.' : 'Te betalen in de praktijk.'}
-            </p>
-          </div>
 
-          <Button
-            onClick={handleConfirm}
-            disabled={processing}
-            className="w-full bg-primary text-primary-foreground hover:bg-secondary rounded-full py-6 text-lg"
-            data-testid="confirm-appointment-button"
-          >
-            {processing ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-current" />
-                {language === 'en' ? 'Booking...' : 'Boeken...'}
-              </span>
-            ) : (
-              language === 'en' ? 'Confirm Appointment' : 'Afspraak Bevestigen'
-            )}
-          </Button>
-        </div>
+            <Button
+              onClick={handleConfirm}
+              disabled={processing}
+              className="w-full bg-primary text-primary-foreground hover:bg-secondary rounded-full py-6 text-lg"
+              data-testid="confirm-appointment-button"
+            >
+              {processing ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-current" />
+                  {language === 'en' ? 'Booking...' : 'Boeken...'}
+                </span>
+              ) : (
+                language === 'en' ? 'Confirm Appointment' : 'Afspraak Bevestigen'
+              )}
+            </Button>
+          </div>
+        </Reveal>
       </div>
     </div>
   );

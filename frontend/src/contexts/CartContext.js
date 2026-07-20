@@ -3,14 +3,17 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cart');
-    if (saved) {
-      setCartItems(JSON.parse(saved));
+  // Lazy-init directly from localStorage (instead of a separate read effect)
+  // so there's no window where a stale write effect (e.g. React StrictMode's
+  // double-invoked effects in dev) can clobber the just-read cart with [].
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
