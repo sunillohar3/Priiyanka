@@ -29,7 +29,7 @@ module.exports = {
           foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#926F3F",
+          DEFAULT: "#7A5C33",
           foreground: "#FFFFFF",
         },
         destructive: {
