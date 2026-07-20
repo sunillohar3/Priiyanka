@@ -20,3 +20,12 @@ test('skip link appears on focus and jumps to main', async ({ page }) => {
   // focus-reveal CSS actually toggled rather than just checking visibility.
   await expect(skip).toHaveCSS('top', '12px');
 });
+
+test('mobile menu toggles', async ({ page }) => {
+  await stubBackend(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto('/');
+  await page.getByTestId('mobile-menu-toggle').click();
+  await expect(page.getByTestId('mobile-menu')).toBeVisible();
+  await expect(page.getByTestId('mobile-nav-services')).toBeVisible();
+});

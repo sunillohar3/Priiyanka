@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ShoppingCart, Globe, LogOut, User, LayoutDashboard, Shield, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,6 +22,7 @@ import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const Navbar = () => {
+  const reduced = useReducedMotion();
   const { language, setLanguage, t } = useLanguage();
   const { cartCount } = useCart();
   const { user, logout, login, register } = useAuth();
@@ -211,9 +213,15 @@ const Navbar = () => {
             >
               <ShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-0 bg-accent text-accent-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center font-bold">
+                <motion.span
+                  key={cartCount}
+                  initial={reduced ? false : { scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={reduced ? { duration: 0 } : undefined}
+                  className="absolute top-1 right-0 bg-accent text-accent-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center font-bold"
+                >
                   {cartCount}
-                </span>
+                </motion.span>
               )}
             </Link>
 
@@ -430,60 +438,66 @@ const Navbar = () => {
         </div>
       </div>
 
-      {mobileOpen && (
-        <div
-          id="mobile-menu"
-          className="md:hidden border-t border-border bg-background/95 backdrop-blur-md"
-          data-testid="mobile-menu"
-        >
-          <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={closeMobile}
-                className={`flex items-center min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}
-                data-testid={`mobile-nav-${link.to === '/' ? 'home' : link.to.slice(1)}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">
-              {user ? (
-                <>
-                  <Link to="/dashboard" onClick={closeMobile} className={`flex items-center gap-2 min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}>
-                    <LayoutDashboard className="w-4 h-4" />
-                    {t('nav.dashboard')}
-                  </Link>
-                  {user.role === 'admin' && (
-                    <Link to="/admin" onClick={closeMobile} className={`flex items-center gap-2 min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}>
-                      <Shield className="w-4 h-4" />
-                      {t('nav.admin')}
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { logout(); closeMobile(); }}
-                    className={`flex items-center gap-2 min-h-[44px] px-2 text-left text-foreground hover:text-primary transition-colors ${focusRing}`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('nav.logout')}
-                  </button>
-                </>
-              ) : (
-                <Button
-                  onClick={() => { closeMobile(); setShowLoginModal(true); }}
-                  className="bg-primary text-primary-foreground hover:bg-secondary rounded-full"
-                  data-testid="mobile-login-button"
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            id="mobile-menu"
+            initial={reduced ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.2 }}
+            className="md:hidden border-t border-border bg-background/95 backdrop-blur-md overflow-hidden"
+            data-testid="mobile-menu"
+          >
+            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobile}
+                  className={`flex items-center min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}
+                  data-testid={`mobile-nav-${link.to === '/' ? 'home' : link.to.slice(1)}`}
                 >
-                  <User className="w-4 h-4" />
-                  {t('nav.login')}
-                </Button>
-              )}
+                  {link.label}
+                </Link>
+              ))}
+
+              <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">
+                {user ? (
+                  <>
+                    <Link to="/dashboard" onClick={closeMobile} className={`flex items-center gap-2 min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}>
+                      <LayoutDashboard className="w-4 h-4" />
+                      {t('nav.dashboard')}
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" onClick={closeMobile} className={`flex items-center gap-2 min-h-[44px] px-2 text-foreground hover:text-primary transition-colors ${focusRing}`}>
+                        <Shield className="w-4 h-4" />
+                        {t('nav.admin')}
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => { logout(); closeMobile(); }}
+                      className={`flex items-center gap-2 min-h-[44px] px-2 text-left text-foreground hover:text-primary transition-colors ${focusRing}`}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {t('nav.logout')}
+                    </button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => { closeMobile(); setShowLoginModal(true); }}
+                    className="bg-primary text-primary-foreground hover:bg-secondary rounded-full"
+                    data-testid="mobile-login-button"
+                  >
+                    <User className="w-4 h-4" />
+                    {t('nav.login')}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

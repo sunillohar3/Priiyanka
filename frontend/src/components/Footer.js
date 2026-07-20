@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import Reveal from './common/Reveal';
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -9,7 +10,7 @@ const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground mt-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <Reveal className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="font-heading text-xl font-bold mb-4">Priiyanka's Nature Nest</h3>
             <p className="text-sm text-primary-foreground/80 italic">"Where Nature Nurtures You"</p>
@@ -98,7 +99,7 @@ const Footer = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
 
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center text-sm text-primary-foreground/80">
           <p>© {new Date().getFullYear()} Priiyanka's Nature Nest. {t('footer.rights')}.</p>
