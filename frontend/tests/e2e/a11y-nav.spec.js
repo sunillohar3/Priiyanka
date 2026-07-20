@@ -21,7 +21,8 @@ test('skip link appears on focus and jumps to main', async ({ page }) => {
   await expect(skip).toHaveCSS('top', '12px');
 });
 
-test('mobile menu toggles', async ({ page }) => {
+test('mobile menu toggles', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'mobile-only');
   await stubBackend(page);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto('/');

@@ -61,6 +61,8 @@ yarn add -D @playwright/test@^1.48 @axe-core/playwright@^4.10
 npx playwright install chromium
 ```
 
+Note: `npx playwright install chromium` is only needed if you remove `channel: 'chrome'` from `playwright.config.js`. The committed config uses the system-installed Google Chrome (`channel: 'chrome'`), so no Chromium download is required on this dev machine.
+
 - [ ] **Step 2: Create `frontend/playwright.config.js`**
 
 ```js
@@ -891,10 +893,12 @@ git commit -m "test(a11y): axe WCAG 2.2 AA gate on core pages + contrast fixes"
 Replace `projects` with:
 ```js
 projects: [
-  { name: 'mobile',  use: { ...devices['Desktop Chrome'], viewport: { width: 375,  height: 812 } } },
-  { name: 'tablet',  use: { ...devices['Desktop Chrome'], viewport: { width: 768,  height: 1024 } } },
-  { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+  { name: 'mobile',  use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 375,  height: 812 } } },
+  { name: 'tablet',  use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 768,  height: 1024 } } },
+  { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 1440, height: 900 } } },
 ],
+
+Use the installed browser via `channel: 'chrome'` — do not download Chromium. (Edge/`msedge` is GPO-blocked on this machine; match whatever channel Task 1's committed `playwright.config.js` uses.)
 ```
 
 - [ ] **Step 2: Write `frontend/tests/e2e/screenshots.spec.js`**

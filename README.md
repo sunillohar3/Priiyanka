@@ -111,7 +111,7 @@ Services include:
 ### Colors
 - **Primary**: Forest Green (#0A4F2A)
 - **Secondary**: Light Green (#3A8B3A)
-- **Accent**: Gold/Brown (#926F3F)
+- **Accent**: Gold/Brown (#7A5C33)
 - **Background**: Cream (#F5EBDD)
 - **Foreground**: Dark Green (#2C3E2D)
 
