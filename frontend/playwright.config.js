@@ -11,6 +11,8 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
+    { name: 'mobile',  use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 375,  height: 812 } } },
+    { name: 'tablet',  use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 768,  height: 1024 } } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
