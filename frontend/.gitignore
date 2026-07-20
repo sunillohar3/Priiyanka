@@ -21,3 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# playwright e2e artifacts (screenshots under tests/e2e/__screenshots__/ are kept)
+/test-results/
+/playwright-report/
