@@ -27,23 +27,28 @@ function AppRouter() {
   
   return (
     <>
+      <a href="#main" className="skip-link" data-testid="skip-link">
+        Skip to main content
+      </a>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/complaint" element={<Suggestions />} />
-        <Route path="/suggestions" element={<Suggestions />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <main id="main">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/complaint" element={<Suggestions />} />
+          <Route path="/suggestions" element={<Suggestions />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
       <Footer />
     </>
   );
