@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
+import Reveal from '../components/common/Reveal';
 import { toast } from 'sonner';
 import axios from 'axios';
 import API from '../lib/api';
@@ -48,15 +49,17 @@ const Contact = () => {
   return (
     <div className="min-h-screen py-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-heading font-bold text-foreground mb-4">
-            {t('contact.title')}
-          </h1>
-        </div>
+        <Reveal>
+          <div className="text-center mb-16">
+            <h1 className="text-5xl md:text-6xl font-heading font-bold text-foreground mb-4">
+              {t('contact.title')}
+            </h1>
+          </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
           {/* Inquiry form */}
-          <div className="bg-card p-8 rounded-2xl border border-border">
+          <Reveal className="bg-card p-8 rounded-2xl border border-border">
             <h2 className="font-heading text-2xl font-semibold text-foreground mb-2">
               {t('contact.formHeading')}
             </h2>
@@ -75,6 +78,7 @@ const Contact = () => {
                     value={form.name}
                     onChange={handleChange}
                     required
+                    aria-required="true"
                     maxLength={120}
                   />
                 </div>
@@ -90,6 +94,7 @@ const Contact = () => {
                     value={form.email}
                     onChange={handleChange}
                     required
+                    aria-required="true"
                     maxLength={200}
                   />
                 </div>
@@ -131,6 +136,7 @@ const Contact = () => {
                   value={form.message}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                   maxLength={5000}
                 />
               </div>
@@ -154,10 +160,10 @@ const Contact = () => {
                 )}
               </Button>
             </form>
-          </div>
+          </Reveal>
 
           {/* Contact details */}
-          <div className="space-y-8">
+          <Reveal delay={0.1} className="space-y-8">
             {/* Location 1 — Voorburg (address + hours) */}
             <div className="bg-card p-8 rounded-2xl border border-border">
               <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc1Name')}</h3>
@@ -224,7 +230,7 @@ const Contact = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         <div className="h-[450px] rounded-2xl overflow-hidden border border-border">
