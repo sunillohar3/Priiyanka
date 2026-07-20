@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import API from '../lib/api';
+import Reveal from '../components/common/Reveal';
 
 const VerifyEmail = () => {
   const { language } = useLanguage();
@@ -36,7 +37,7 @@ const VerifyEmail = () => {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6 text-center">
-      <div className="max-w-md">
+      <Reveal className="max-w-md" data-testid="verify-status">
         {status === 'verifying' && (
           <>
             <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
@@ -63,7 +64,7 @@ const VerifyEmail = () => {
             <Link to="/"><Button variant="outline" className="rounded-full px-8">{language === 'en' ? 'Back to Home' : 'Terug naar Home'}</Button></Link>
           </>
         )}
-      </div>
+      </Reveal>
     </div>
   );
 };

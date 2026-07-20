@@ -8,6 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
 import { toast } from 'sonner';
 import API from '../lib/api';
+import Reveal from '../components/common/Reveal';
 
 const ResetPassword = () => {
   const { language } = useLanguage();
@@ -47,7 +48,7 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-6 text-center">
+      <div className="min-h-[70vh] flex items-center justify-center px-6 text-center" data-testid="reset-invalid">
         <div>
           <h1 className="text-2xl font-heading font-semibold text-foreground mb-3">
             {language === 'en' ? 'Invalid reset link' : 'Ongeldige resetlink'}
@@ -60,11 +61,11 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md bg-card p-8 rounded-2xl border border-border">
+      <Reveal className="w-full max-w-md bg-card p-8 rounded-2xl border border-border">
         <h1 className="text-2xl font-heading font-semibold text-foreground mb-6">
           {language === 'en' ? 'Set a new password' : 'Nieuw wachtwoord instellen'}
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate data-testid="reset-password-form">
           <div className="space-y-2">
             <Label htmlFor="new-password">
               {language === 'en' ? 'New password' : 'Nieuw wachtwoord'} <span className="text-destructive" aria-hidden="true">*</span>
@@ -94,13 +95,13 @@ const ResetPassword = () => {
             />
           </div>
           {error && <p id="reset-error" role="alert" className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" className="w-full" disabled={submitting} data-testid="reset-submit">
             {submitting
               ? (language === 'en' ? 'Updating...' : 'Bijwerken...')
               : (language === 'en' ? 'Update password' : 'Wachtwoord bijwerken')}
           </Button>
         </form>
-      </div>
+      </Reveal>
     </div>
   );
 };
