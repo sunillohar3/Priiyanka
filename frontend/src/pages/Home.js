@@ -1,9 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Leaf, Clock, Shield, Heart } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
+import Section from '../components/common/Section';
+import SectionHeading from '../components/common/SectionHeading';
+import Stagger from '../components/common/Stagger';
+import Reveal from '../components/common/Reveal';
+import FeatureCard from '../components/common/FeatureCard';
 
 const Home = () => {
   const { t, language } = useLanguage();
@@ -61,57 +67,40 @@ const Home = () => {
       >
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
-        <div className="relative z-10 text-center px-6 max-w-4xl">
-          <h1 className="text-5xl md:text-6xl font-heading font-bold text-white mb-6">
-            {t('hero.title')}
-          </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8">
-            {t('hero.subtitle')}
-          </p>
+        <motion.div
+          className="relative z-10 text-center px-6 max-w-4xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <h1 className="text-5xl md:text-6xl font-heading font-bold text-white mb-6">{t('hero.title')}</h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-8">{t('hero.subtitle')}</p>
           <Link to="/services">
-            <Button 
-              size="lg" 
-              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-12 py-6 text-lg shadow-2xl"
-              data-testid="hero-cta-button"
-            >
+            <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-12 py-6 text-lg shadow-2xl" data-testid="hero-cta-button">
               {t('hero.cta')}
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
-      <section className="py-20 md:py-32 bg-card">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-heading font-semibold text-foreground mb-4">
-              {language === 'en' ? 'Why Choose Us' : 'Waarom Voor Ons Kiezen'}
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {language === 'en' 
-                ? 'Experience authentic Ayurvedic care in the heart of the Netherlands'
-                : 'Ervaar authentieke Ayurvedische zorg in het hart van Nederland'}
-            </p>
-          </div>
+      <Section background="card">
+        <SectionHeading
+          eyebrow={language === 'en' ? 'Our Promise' : 'Onze Belofte'}
+          title={language === 'en' ? 'Why Choose Us' : 'Waarom Voor Ons Kiezen'}
+          subtitle={language === 'en'
+            ? 'Experience authentic Ayurvedic care in the heart of the Netherlands'
+            : 'Ervaar authentieke Ayurvedische zorg in het hart van Nederland'}
+        />
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => (
+            <FeatureCard key={index} icon={feature.icon} title={feature.title} description={feature.description} />
+          ))}
+        </Stagger>
+      </Section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-background p-8 rounded-2xl border border-border hover:shadow-lg transition-shadow">
-                <feature.icon className="w-12 h-12 text-primary mb-4" />
-                <h3 className="text-xl font-heading font-semibold text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-32">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <Section>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <Reveal>
             <div>
               <h2 className="text-4xl md:text-5xl font-heading font-semibold text-foreground mb-6">
                 {t('about.title')}
@@ -127,6 +116,8 @@ const Home = () => {
                 </Button>
               </Link>
             </div>
+          </Reveal>
+          <Reveal delay={0.1}>
             <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="/assets/profile.jpg"
@@ -136,9 +127,9 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-          </div>
+          </Reveal>
         </div>
-      </section>
+      </Section>
     </div>
   );
 };
