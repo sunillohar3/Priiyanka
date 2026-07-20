@@ -22,7 +22,7 @@
   }
 
   .skip-link {
-    position: absolute;
+    position: fixed;
     left: 0.75rem;
     top: -3rem;
     z-index: 100;
