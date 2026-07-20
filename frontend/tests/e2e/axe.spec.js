@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 const { stubBackend } = require('./fixtures');
 
-const pages = ['/', '/services', '/about', '/contact'];
+const pages = ['/', '/services', '/about', '/contact', '/cart', '/privacy', '/terms', '/suggestions', '/reset-password?token=abc', '/verify-email?token=abc', '/no-such-page'];
 
 for (const path of pages) {
   test(`axe: no serious/critical violations on ${path}`, async ({ page }) => {
@@ -15,6 +15,10 @@ for (const path of pages) {
     // in this Playwright 1.48.2 install (see reduced-motion.spec.js).
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await stubBackend(page);
+    // /verify-email otherwise sits on an error spinner because its POST
+    // isn't stubbed by default; registering this unconditionally only
+    // affects the verify-email page (no other route matches this pattern).
+    await page.route('**/api/auth/verify-email', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ message: 'verified' }) }));
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     const results = await new AxeBuilder({ page })
