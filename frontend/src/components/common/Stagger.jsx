@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { staggerVariants } from '../../lib/motionVariants';
+import { StaggerContext } from './staggerContext';
 
 const Stagger = ({ children, stagger = 0.1, className, ...rest }) => {
   const reduced = useReducedMotion();
@@ -13,7 +14,7 @@ const Stagger = ({ children, stagger = 0.1, className, ...rest }) => {
       viewport={{ once: true, amount: 0.15 }}
       {...rest}
     >
-      {children}
+      <StaggerContext.Provider value={true}>{children}</StaggerContext.Provider>
     </motion.div>
   );
 };
