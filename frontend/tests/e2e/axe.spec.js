@@ -46,3 +46,25 @@ for (const path of ['/dashboard', '/admin']) {
     expect(serious, JSON.stringify(serious.map(v => v.id), null, 2)).toEqual([]);
   });
 }
+
+// /admin renders each tab's panel conditionally (activeTab), so scanning only the
+// default 'services' tab (above) misses the other four. Scan each tab's panel so
+// a11y issues on non-default tabs (e.g. unlabeled selects) can't slip through.
+const ADMIN_TABS = ['services', 'appointments', 'availability', 'users', 'messages'];
+for (const tab of ADMIN_TABS) {
+  test(`axe: no serious/critical violations on /admin tab "${tab}" (authed)`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await stubBackend(page);
+    await stubAdmin(page);
+    await stubAuth(page, ADMIN);
+    await page.goto('/admin');
+    await page.waitForLoadState('networkidle');
+    await page.getByTestId(`tab-${tab}`).click();
+    await expect(page.getByRole('tabpanel')).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    const serious = results.violations.filter(v => ['serious', 'critical'].includes(v.impact));
+    expect(serious, `tab ${tab}: ` + JSON.stringify(serious.map(v => v.id), null, 2)).toEqual([]);
+  });
+}
