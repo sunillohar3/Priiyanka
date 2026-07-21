@@ -26,3 +26,6 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /tests/e2e/__screenshots__/
+
+# Single source of truth is yarn.lock (CI uses yarn). Do not commit npm lockfiles.
+/package-lock.json
