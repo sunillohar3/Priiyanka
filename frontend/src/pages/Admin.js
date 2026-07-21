@@ -338,7 +338,7 @@ const Admin = () => {
 
   const statusBadge = {
     new: 'bg-accent text-accent-foreground',
-    read: 'bg-primary text-primary-foreground',
+    read: 'bg-secondary text-secondary-foreground',
     handled: 'bg-primary text-primary-foreground',
   };
 
