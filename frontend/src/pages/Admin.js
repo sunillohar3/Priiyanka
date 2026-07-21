@@ -337,9 +337,9 @@ const Admin = () => {
     : appointments.filter((a) => a.status === appointmentFilter);
 
   const statusBadge = {
-    new: 'bg-accent/15 text-accent',
-    read: 'bg-secondary/15 text-secondary',
-    handled: 'bg-primary/10 text-primary',
+    new: 'bg-accent text-accent-foreground',
+    read: 'bg-primary text-primary-foreground',
+    handled: 'bg-primary text-primary-foreground',
   };
 
   const TAB_KEYS = ['services', 'appointments', 'availability', 'users', 'messages'];
@@ -542,8 +542,9 @@ const Admin = () => {
                   <form onSubmit={handleSubmitService} className="bg-muted p-6 rounded-xl mb-6" data-testid="service-form">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Name (English)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-name-en">Name (English)</label>
                         <Input
+                          id="svc-name-en"
                           value={formData.name_en}
                           onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                           required
@@ -551,8 +552,9 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Name (Dutch)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-name-nl">Name (Dutch)</label>
                         <Input
+                          id="svc-name-nl"
                           value={formData.name_nl}
                           onChange={(e) => setFormData({ ...formData, name_nl: e.target.value })}
                           required
@@ -562,8 +564,9 @@ const Admin = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Description (English)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-description-en">Description (English)</label>
                         <Textarea
+                          id="svc-description-en"
                           value={formData.description_en}
                           onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
                           required
@@ -571,8 +574,9 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Description (Dutch)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-description-nl">Description (Dutch)</label>
                         <Textarea
+                          id="svc-description-nl"
                           value={formData.description_nl}
                           onChange={(e) => setFormData({ ...formData, description_nl: e.target.value })}
                           required
@@ -582,8 +586,9 @@ const Admin = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Price (€)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-price">Price (€)</label>
                         <Input
+                          id="svc-price"
                           type="number"
                           step="0.01"
                           value={formData.price}
@@ -593,8 +598,9 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Duration (min)</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-duration">Duration (min)</label>
                         <Input
+                          id="svc-duration"
                           type="number"
                           value={formData.duration}
                           onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
@@ -603,8 +609,9 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Category</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-category">Category</label>
                         <Input
+                          id="svc-category"
                           value={formData.category}
                           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                           required
@@ -612,8 +619,9 @@ const Admin = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Image</label>
+                        <label className="block text-sm font-medium mb-2" htmlFor="svc-image-upload">Image</label>
                         <input
+                          id="svc-image-upload"
                           type="file"
                           accept="image/*"
                           onChange={handleFileUpload}
@@ -624,6 +632,8 @@ const Admin = () => {
                           <p className="text-sm text-muted-foreground mt-2">Uploading image...</p>
                         )}
                         <Input
+                          id="svc-image-url"
+                          aria-label="Image URL"
                           value={formData.image_url}
                           onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                           placeholder="Or paste an existing image URL"
@@ -813,20 +823,20 @@ const Admin = () => {
                 </p>
                 <form onSubmit={handleAddBlock} className="bg-muted p-6 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" data-testid="block-form">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Date</label>
-                    <Input type="date" value={blockForm.date} onChange={(e) => setBlockForm({ ...blockForm, date: e.target.value })} required />
+                    <label className="block text-sm font-medium mb-2" htmlFor="block-date">Date</label>
+                    <Input id="block-date" type="date" value={blockForm.date} onChange={(e) => setBlockForm({ ...blockForm, date: e.target.value })} required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">From (optional)</label>
-                    <Input type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
+                    <label className="block text-sm font-medium mb-2" htmlFor="block-start-time">From (optional)</label>
+                    <Input id="block-start-time" type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">To (optional)</label>
-                    <Input type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
+                    <label className="block text-sm font-medium mb-2" htmlFor="block-end-time">To (optional)</label>
+                    <Input id="block-end-time" type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Reason (optional)</label>
-                    <Input value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} placeholder="e.g. Holiday" />
+                    <label className="block text-sm font-medium mb-2" htmlFor="block-reason">Reason (optional)</label>
+                    <Input id="block-reason" value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} placeholder="e.g. Holiday" />
                   </div>
                   <Button type="submit" className="bg-primary text-primary-foreground">Add block</Button>
                 </form>
