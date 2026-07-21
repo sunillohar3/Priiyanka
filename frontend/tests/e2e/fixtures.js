@@ -54,8 +54,9 @@ async function stubAdmin(page) {
   await page.route('**/api/appointments', (r) => r.fulfill(json(APPOINTMENTS)));
   await page.route('**/api/appointments/*/cancel', (r) => r.fulfill(json({ ok: true })));
   await page.route('**/api/appointments/*/reschedule', (r) => r.fulfill(json({ ok: true })));
-  await page.route('**/api/appointments/*/status', (r) => r.fulfill(json({ ok: true })));
+  await page.route('**/api/appointments/*', (r) => r.fulfill(json({ ok: true })));
   await page.route('**/api/admin/users', (r) => r.fulfill(json(ADMIN_USERS)));
+  await page.route('**/api/admin/users/*', (r) => r.fulfill(json({ ok: true })));
   await page.route('**/api/admin/contact', (r) => r.fulfill(json(ADMIN_MESSAGES)));
   await page.route('**/api/admin/contact/*', (r) => r.fulfill(json({ ok: true })));
   await page.route('**/api/admin/blocked-slots', (r) => r.fulfill(json(BLOCKED_SLOTS)));
