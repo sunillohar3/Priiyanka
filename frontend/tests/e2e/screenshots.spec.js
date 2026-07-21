@@ -1,11 +1,11 @@
 const { test } = require('@playwright/test');
-const { stubBackend, seedCart } = require('./fixtures');
+const { stubBackend, seedCart, stubAdmin, stubAuth, ADMIN } = require('./fixtures');
 
 const pages = {
   home: '/', services: '/services', about: '/about', contact: '/contact',
   cart: '/cart', privacy: '/privacy', terms: '/terms', suggestions: '/suggestions',
   'reset-password': '/reset-password?token=abc', 'verify-email': '/verify-email?token=abc',
-  notfound: '/no-such-page',
+  notfound: '/no-such-page', dashboard: '/dashboard', admin: '/admin',
 };
 
 for (const [name, path] of Object.entries(pages)) {
@@ -17,6 +17,10 @@ for (const [name, path] of Object.entries(pages)) {
     await stubBackend(page);
     if (name === 'cart') {
       await seedCart(page);
+    }
+    if (name === 'dashboard' || name === 'admin') {
+      await stubAdmin(page);
+      await stubAuth(page, ADMIN);
     }
     // /verify-email otherwise sits on an error spinner because its POST
     // isn't stubbed by default; registering this unconditionally only

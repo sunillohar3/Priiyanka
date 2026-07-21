@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
-const { stubBackend } = require('./fixtures');
+const { stubBackend, stubAdmin, stubAuth, ADMIN } = require('./fixtures');
 
 const pages = ['/', '/services', '/about', '/contact', '/cart', '/privacy', '/terms', '/suggestions', '/reset-password?token=abc', '/verify-email?token=abc', '/no-such-page'];
 
@@ -19,6 +19,24 @@ for (const path of pages) {
     // isn't stubbed by default; registering this unconditionally only
     // affects the verify-email page (no other route matches this pattern).
     await page.route('**/api/auth/verify-email', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ message: 'verified' }) }));
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    const serious = results.violations.filter(v => ['serious', 'critical'].includes(v.impact));
+    expect(serious, JSON.stringify(serious.map(v => v.id), null, 2)).toEqual([]);
+  });
+}
+
+// Authenticated routes need stubAdmin + stubAuth(ADMIN) before goto, in addition
+// to stubBackend, so they're covered as separate tests rather than in the loop above.
+for (const path of ['/dashboard', '/admin']) {
+  test(`axe: no serious/critical violations on ${path} (authed)`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await stubBackend(page);
+    await stubAdmin(page);
+    await stubAuth(page, ADMIN);
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     const results = await new AxeBuilder({ page })

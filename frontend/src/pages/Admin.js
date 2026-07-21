@@ -717,18 +717,20 @@ const Admin = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Edit ${service.name_en}`}
                           onClick={() => handleEditService(service)}
                           data-testid={`edit-service-${service.service_id}`}
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Delete ${service.name_en}`}
                           onClick={() => handleDeleteService(service.service_id)}
                           data-testid={`delete-service-${service.service_id}`}
                         >
-                          <Trash2 className="w-4 h-4 text-destructive" />
+                          <Trash2 className="w-4 h-4 text-destructive" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
