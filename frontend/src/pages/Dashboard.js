@@ -9,9 +9,10 @@ import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
+import Reveal from '../components/common/Reveal';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -22,13 +23,14 @@ const Dashboard = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return; // wait for the auth check to resolve before deciding
     if (!user) {
       navigate('/');
       return;
     }
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
     try {
@@ -102,22 +104,22 @@ const Dashboard = () => {
 
   const upcoming = appointments.filter((a) => a.status !== 'cancelled' && a.status !== 'completed').length;
   const statusColor = {
-    pending: 'bg-accent/15 text-accent',
-    confirmed: 'bg-secondary/15 text-secondary',
-    completed: 'bg-primary/10 text-primary',
-    cancelled: 'bg-destructive/10 text-destructive',
+    pending: 'bg-accent text-accent-foreground',
+    confirmed: 'bg-secondary text-secondary-foreground',
+    completed: 'bg-primary text-primary-foreground',
+    cancelled: 'bg-destructive text-destructive-foreground',
   };
   const canModify = (s) => s === 'pending' || s === 'confirmed';
 
   return (
     <div className="min-h-screen py-20 bg-muted">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="mb-8">
+        <Reveal className="mb-8">
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-2" data-testid="dashboard-title">
             {language === 'en' ? 'Welcome back' : 'Welkom terug'}, {user.name}
           </h1>
           <p className="text-muted-foreground">{user.email}</p>
-        </div>
+        </Reveal>
 
         {!user.email_verified && (
           <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-8 flex flex-wrap items-center gap-3" data-testid="verify-banner">
