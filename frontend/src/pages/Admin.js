@@ -5,13 +5,13 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield, MessageSquare, Mail, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Calendar, ShoppingBag, Shield, MessageSquare, Mail, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
 
 const Admin = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('services');
@@ -39,12 +39,14 @@ const Admin = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return; // wait for the auth check to resolve before deciding
     if (!user || user.role !== 'admin') {
       navigate('/dashboard');
       return;
     }
     fetchData();
-  }, [user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
     // Load each section independently so one slow/failing endpoint
@@ -197,15 +199,19 @@ const Admin = () => {
     }
   };
 
+  const moveService = (from, to) => {
+    if (from === null || to === from || to < 0 || to >= services.length) return;
+    const arr = [...services];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setServices(arr);
+    persistServiceOrder(arr);
+  };
+
   const handleServiceDrop = (dropIndex) => {
     const from = dragIndex.current;
     dragIndex.current = null;
-    if (from === null || from === dropIndex) return;
-    const arr = [...services];
-    const [moved] = arr.splice(from, 1);
-    arr.splice(dropIndex, 0, moved);
-    setServices(arr);
-    persistServiceOrder(arr);
+    moveService(from, dropIndex);
   };
 
   const handleAddBlock = async (e) => {
@@ -603,7 +609,7 @@ const Admin = () => {
                 )}
 
                 {services.length > 1 && (
-                  <p className="text-sm text-muted-foreground mb-3">Drag rows to reorder how services appear on the site.</p>
+                  <p className="text-sm text-muted-foreground mb-3">Drag rows, or use the up/down buttons, to reorder how services appear on the site.</p>
                 )}
                 <div className="space-y-4">
                   {services.map((service, index) => (
@@ -626,6 +632,26 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Move ${service.name_en} up`}
+                          disabled={index === 0}
+                          onClick={() => moveService(index, index - 1)}
+                          data-testid={`move-up-${service.service_id}`}
+                        >
+                          <ChevronUp className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Move ${service.name_en} down`}
+                          disabled={index === services.length - 1}
+                          onClick={() => moveService(index, index + 1)}
+                          data-testid={`move-down-${service.service_id}`}
+                        >
+                          <ChevronDown className="w-4 h-4" aria-hidden="true" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
