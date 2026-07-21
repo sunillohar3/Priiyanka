@@ -784,6 +784,7 @@ const Admin = () => {
                             onChange={(e) => handleUpdateAppointmentStatus(appt.appointment_id, e.target.value)}
                             className="px-4 py-2 rounded-lg border border-border bg-background"
                             data-testid={`appointment-status-${appt.appointment_id}`}
+                            aria-label={`Appointment status for ${appt.booking_date} at ${appt.booking_time}`}
                           >
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
@@ -900,6 +901,7 @@ const Admin = () => {
                             onChange={(e) => handleUpdateUserRole(u.user_id, e.target.value)}
                             className="px-4 py-2 rounded-lg border border-border bg-background font-medium"
                             data-testid={`user-role-${u.user_id}`}
+                            aria-label={`User role for ${u.name}`}
                           >
                             <option value="user">👤 User</option>
                             <option value="admin">👑 Admin</option>
@@ -988,6 +990,7 @@ const Admin = () => {
                               onChange={(e) => handleUpdateMessageStatus(msg.message_id, e.target.value)}
                               className="px-4 py-2 rounded-lg border border-border bg-background"
                               data-testid={`message-status-${msg.message_id}`}
+                              aria-label={`Message status for ${msg.name}`}
                             >
                               <option value="new">New</option>
                               <option value="read">Read</option>
