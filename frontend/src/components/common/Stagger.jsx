@@ -11,7 +11,7 @@ const Stagger = ({ children, stagger = 0.1, className, ...rest }) => {
       variants={staggerVariants(reduced, stagger)}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
+      viewport={{ once: true, amount: 0 }}
       {...rest}
     >
       <StaggerContext.Provider value={true}>{children}</StaggerContext.Provider>
