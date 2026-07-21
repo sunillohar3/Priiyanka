@@ -18,4 +18,20 @@ test.describe('admin', () => {
     const req = await reorder;
     expect(JSON.parse(req.postData()).ordered_ids).toContain(SERVICES[0].service_id);
   });
+
+  test('non-admin is redirected to dashboard', async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await stubBackend(page); await stubAdmin(page);
+    await stubAuth(page, { id: 'u-1', email: 'c@e.com', name: 'Client', role: 'client', email_verified: true });
+    await page.goto('/admin');
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test('tabs switch and reflect aria-selected', async ({ page }) => {
+    await page.goto('/admin');
+    const usersTab = page.getByRole('tab', { name: /Users/i });
+    await usersTab.click();
+    await expect(usersTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel')).toBeVisible();
+  });
 });

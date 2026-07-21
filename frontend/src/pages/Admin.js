@@ -342,6 +342,28 @@ const Admin = () => {
     handled: 'bg-primary/10 text-primary',
   };
 
+  const TAB_KEYS = ['services', 'appointments', 'availability', 'users', 'messages'];
+
+  const handleTabKeyDown = (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const currentIndex = TAB_KEYS.indexOf(activeTab);
+    let nextIndex = currentIndex;
+    if (e.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % TAB_KEYS.length;
+    } else if (e.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + TAB_KEYS.length) % TAB_KEYS.length;
+    } else if (e.key === 'Home') {
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      nextIndex = TAB_KEYS.length - 1;
+    }
+    const nextKey = TAB_KEYS[nextIndex];
+    setActiveTab(nextKey);
+    const nextTabEl = document.getElementById(`tab-${nextKey}`);
+    if (nextTabEl) nextTabEl.focus();
+  };
+
   return (
     <div className="min-h-screen py-20 bg-muted">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -400,7 +422,12 @@ const Admin = () => {
         </div>
 
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
-          <div className="flex overflow-x-auto border-b border-border">
+          <div
+            className="flex overflow-x-auto border-b border-border"
+            role="tablist"
+            aria-label="Admin sections"
+            onKeyDown={handleTabKeyDown}
+          >
             <button
               onClick={() => setActiveTab('services')}
               className={`shrink-0 whitespace-nowrap px-6 py-4 font-semibold transition-colors ${
@@ -409,6 +436,11 @@ const Admin = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               data-testid="tab-services"
+              role="tab"
+              id="tab-services"
+              aria-selected={activeTab === 'services'}
+              aria-controls="panel-services"
+              tabIndex={activeTab === 'services' ? 0 : -1}
             >
               Services
             </button>
@@ -420,6 +452,11 @@ const Admin = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               data-testid="tab-appointments"
+              role="tab"
+              id="tab-appointments"
+              aria-selected={activeTab === 'appointments'}
+              aria-controls="panel-appointments"
+              tabIndex={activeTab === 'appointments' ? 0 : -1}
             >
               Appointments
             </button>
@@ -431,6 +468,11 @@ const Admin = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               data-testid="tab-availability"
+              role="tab"
+              id="tab-availability"
+              aria-selected={activeTab === 'availability'}
+              aria-controls="panel-availability"
+              tabIndex={activeTab === 'availability' ? 0 : -1}
             >
               Availability
             </button>
@@ -442,6 +484,11 @@ const Admin = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               data-testid="tab-users"
+              role="tab"
+              id="tab-users"
+              aria-selected={activeTab === 'users'}
+              aria-controls="panel-users"
+              tabIndex={activeTab === 'users' ? 0 : -1}
             >
               Users
             </button>
@@ -453,6 +500,11 @@ const Admin = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               data-testid="tab-messages"
+              role="tab"
+              id="tab-messages"
+              aria-selected={activeTab === 'messages'}
+              aria-controls="panel-messages"
+              tabIndex={activeTab === 'messages' ? 0 : -1}
             >
               Messages
             </button>
@@ -460,7 +512,7 @@ const Admin = () => {
 
           <div className="p-8">
             {activeTab === 'services' && (
-              <div>
+              <div role="tabpanel" id="panel-services" aria-labelledby="tab-services" tabIndex={0}>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-heading font-semibold text-foreground">Manage Services</h2>
                   <Button
@@ -676,7 +728,7 @@ const Admin = () => {
             )}
 
             {activeTab === 'appointments' && (
-              <div>
+              <div role="tabpanel" id="panel-appointments" aria-labelledby="tab-appointments" tabIndex={0}>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Manage Appointments</h2>
 
                 <div className="flex flex-wrap gap-2 mb-6">
@@ -753,7 +805,7 @@ const Admin = () => {
             )}
 
             {activeTab === 'availability' && (
-              <div>
+              <div role="tabpanel" id="panel-availability" aria-labelledby="tab-availability" tabIndex={0}>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-2">Availability</h2>
                 <p className="text-muted-foreground mb-6 text-sm">
                   Block a whole day (leave the times empty) or a time range within a day. Clients can't book blocked times.
@@ -802,7 +854,7 @@ const Admin = () => {
             )}
 
             {activeTab === 'users' && (
-              <div>
+              <div role="tabpanel" id="panel-users" aria-labelledby="tab-users" tabIndex={0}>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-heading font-semibold text-foreground">Manage Users</h2>
                   <div className="text-sm text-muted-foreground">
@@ -873,7 +925,7 @@ const Admin = () => {
             )}
 
             {activeTab === 'messages' && (
-              <div>
+              <div role="tabpanel" id="panel-messages" aria-labelledby="tab-messages" tabIndex={0}>
                 <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Contact Messages</h2>
 
                 <div className="flex flex-wrap gap-2 mb-6">
