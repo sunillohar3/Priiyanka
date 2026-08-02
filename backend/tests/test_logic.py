@@ -67,3 +67,11 @@ def test_content_type_map():
     assert server.CONTENT_TYPE_BY_EXT[".png"] == "image/png"
     assert server.CONTENT_TYPE_BY_EXT[".jpg"] == "image/jpeg"
     assert ".exe" not in server.CONTENT_TYPE_BY_EXT
+
+
+def test_is_valid_location():
+    assert server._is_valid_location("voorburg") is True
+    assert server._is_valid_location("the_hague_centre") is True
+    assert server._is_valid_location("amsterdam") is False
+    assert server._is_valid_location("") is False
+    assert server._is_valid_location(None) is False

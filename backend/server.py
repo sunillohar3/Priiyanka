@@ -122,6 +122,18 @@ WORKING_HOURS = {
     5: (10 * 60, 13 * 60),
 }
 
+# The two physical locations the practitioner works from. Fixed list —
+# there is no admin UI to manage these; adding a third is a code change.
+LOCATIONS = [
+    {"location_id": "voorburg", "name": "Voorburg"},
+    {"location_id": "the_hague_centre", "name": "The Hague Centre"},
+]
+_VALID_LOCATION_IDS = {loc["location_id"] for loc in LOCATIONS}
+
+
+def _is_valid_location(location_id) -> bool:
+    return location_id in _VALID_LOCATION_IDS
+
 
 def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
     # Masked diagnostic so we can confirm the loaded key without exposing it.
@@ -687,6 +699,13 @@ async def delete_uploaded_image(file_id: str, request: Request, session_token: O
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="File not found")
     return {"deleted": True, "file_id": file_id}
+
+# ============ LOCATIONS ENDPOINT ============
+
+@api_router.get("/locations")
+async def get_locations():
+    """Get the two bookable locations (public, static list)."""
+    return LOCATIONS
 
 # ============ SERVICES ENDPOINTS ============
 
