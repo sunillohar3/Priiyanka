@@ -46,6 +46,10 @@ const Cart = () => {
       toast.error(language === 'en' ? 'Please select a location, date and time' : 'Selecteer een locatie, datum en tijd');
       return;
     }
+    if (new Date(`${date}T${time}`) < new Date()) {
+      toast.error(language === 'en' ? 'Please choose a date and time in the future.' : 'Kies een datum en tijd in de toekomst.');
+      return;
+    }
 
     setProcessing(true);
     try {

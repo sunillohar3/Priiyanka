@@ -90,6 +90,10 @@ const Dashboard = () => {
       toast.error(language === 'en' ? 'Please choose a location, date and time.' : 'Kies een locatie, datum en tijd.');
       return;
     }
+    if (new Date(`${rDate}T${rTime}`) < new Date()) {
+      toast.error(language === 'en' ? 'Please choose a date and time in the future.' : 'Kies een datum en tijd in de toekomst.');
+      return;
+    }
     setBusy(true);
     try {
       await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime, location_id: rLocation }, { withCredentials: true });
