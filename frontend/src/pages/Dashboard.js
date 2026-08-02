@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Calendar, Clock, User, Euro, MailWarning } from 'lucide-react';
+import { Calendar, Clock, User, Euro, MailWarning, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -16,10 +16,12 @@ const Dashboard = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleId, setRescheduleId] = useState(null);
   const [rDate, setRDate] = useState('');
   const [rTime, setRTime] = useState('');
+  const [rLocation, setRLocation] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,13 @@ const Dashboard = () => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    axios.get(`${API}/locations`).then((res) => setLocations(res.data)).catch(() => {
+      toast.error(language === 'en' ? 'Could not load locations.' : 'Kan locaties niet laden.');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -44,6 +53,7 @@ const Dashboard = () => {
   };
 
   const getMinDate = () => new Date().toISOString().split('T')[0];
+  const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
 
   const handleResend = async () => {
     try {
@@ -72,16 +82,17 @@ const Dashboard = () => {
     setRescheduleId(appt.appointment_id);
     setRDate(appt.booking_date);
     setRTime(appt.booking_time);
+    setRLocation(appt.location_id || '');
   };
 
   const submitReschedule = async (id) => {
-    if (!rDate || !rTime) {
-      toast.error(language === 'en' ? 'Please choose a date and time.' : 'Kies een datum en tijd.');
+    if (!rDate || !rTime || !rLocation) {
+      toast.error(language === 'en' ? 'Please choose a location, date and time.' : 'Kies een locatie, datum en tijd.');
       return;
     }
     setBusy(true);
     try {
-      await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime }, { withCredentials: true });
+      await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime, location_id: rLocation }, { withCredentials: true });
       toast.success(language === 'en' ? 'Appointment rescheduled.' : 'Afspraak verzet.');
       setRescheduleId(null);
       fetchData();
@@ -186,6 +197,11 @@ const Dashboard = () => {
                       <p className="font-semibold text-foreground flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-primary" />
                         {appt.booking_date} · {appt.booking_time}
+                        {locationName(appt.location_id) && (
+                          <span className="inline-flex items-center gap-1 text-sm font-normal text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5" /> {locationName(appt.location_id)}
+                          </span>
+                        )}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(appt.items || []).map((it, idx) => (
@@ -208,6 +224,20 @@ const Dashboard = () => {
                     <div className="mt-3">
                       {rescheduleId === appt.appointment_id ? (
                         <div className="flex flex-wrap items-end gap-3 bg-muted/50 p-3 rounded-xl">
+                          <div className="space-y-1">
+                            <Label htmlFor={`rl-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Location' : 'Locatie'}</Label>
+                            <select
+                              id={`rl-${appt.appointment_id}`}
+                              value={rLocation}
+                              onChange={(e) => setRLocation(e.target.value)}
+                              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                            >
+                              <option value="" disabled>{language === 'en' ? 'Choose a location' : 'Kies een locatie'}</option>
+                              {locations.map((loc) => (
+                                <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
+                              ))}
+                            </select>
+                          </div>
                           <div className="space-y-1">
                             <Label htmlFor={`rd-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Date' : 'Datum'}</Label>
                             <Input id={`rd-${appt.appointment_id}`} type="date" min={getMinDate()} value={rDate} onChange={(e) => setRDate(e.target.value)} className="h-9" />
