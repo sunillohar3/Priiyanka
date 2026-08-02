@@ -342,6 +342,7 @@ class Appointment(BaseModel):
     total_duration: int        # minutes
     booking_date: str
     booking_time: str
+    location_id: str
     notes: Optional[str] = None
     status: str
     created_at: datetime
@@ -350,6 +351,7 @@ class AppointmentCreate(BaseModel):
     items: List[dict]
     booking_date: str
     booking_time: str
+    location_id: str
     notes: Optional[str] = None
 
 class RescheduleRequest(BaseModel):
@@ -370,6 +372,7 @@ class BlockedSlot(BaseModel):
     model_config = ConfigDict(extra="ignore")
     block_id: str
     date: str
+    location_id: str
     start_time: Optional[str] = None   # None = whole day blocked
     end_time: Optional[str] = None
     reason: Optional[str] = None
@@ -377,6 +380,7 @@ class BlockedSlot(BaseModel):
 
 class BlockedSlotCreate(BaseModel):
     date: str
+    location_id: str
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     reason: Optional[str] = None
@@ -825,9 +829,10 @@ def _hours_problem(date_str: str, time_str: str, duration: int):
     return None
 
 
-async def _slot_conflict(date_str: str, time_str: str, duration: int, exclude_id: str = None):
+async def _slot_conflict(date_str: str, time_str: str, duration: int, location_id: str, exclude_id: str = None):
     """Return an error message if the requested visit is outside working hours,
-    inside a blocked slot, or overlaps another appointment; else None."""
+    inside a blocked slot at this location, or overlaps another appointment at
+    this location; else None. Locations are checked independently of each other."""
     problem = _hours_problem(date_str, time_str, duration)
     if problem:
         return problem
@@ -835,15 +840,15 @@ async def _slot_conflict(date_str: str, time_str: str, duration: int, exclude_id
     start = _time_to_minutes(time_str)
     end = start + duration
 
-    # Admin-blocked slots (whole-day, or a time range).
-    for s in await db.blocked_slots.find({"date": date_str}, {"_id": 0}).to_list(1000):
+    # Admin-blocked slots (whole-day, or a time range) at this location.
+    for s in await db.blocked_slots.find({"date": date_str, "location_id": location_id}, {"_id": 0}).to_list(1000):
         st = _time_to_minutes(s.get("start_time")) if s.get("start_time") else None
         et = _time_to_minutes(s.get("end_time")) if s.get("end_time") else None
         if st is None or et is None or (start < et and st < end):
             return "That time is unavailable. Please choose another."
 
-    # Overlap with existing (non-cancelled) appointments.
-    for a in await db.appointments.find({"booking_date": date_str, "status": {"$ne": "cancelled"}}, {"_id": 0}).to_list(1000):
+    # Overlap with existing (non-cancelled) appointments at this location.
+    for a in await db.appointments.find({"booking_date": date_str, "location_id": location_id, "status": {"$ne": "cancelled"}}, {"_id": 0}).to_list(1000):
         if exclude_id and a.get("appointment_id") == exclude_id:
             continue
         s2 = _time_to_minutes(a.get("booking_time", ""))
@@ -876,12 +881,14 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         raise HTTPException(status_code=400, detail="No treatments selected")
     if not data.booking_date or not data.booking_time:
         raise HTTPException(status_code=400, detail="Please select a date and time")
+    if not _is_valid_location(data.location_id):
+        raise HTTPException(status_code=400, detail="Please select a valid location")
 
     total_amount = round(sum(float(i.get("price", 0)) for i in data.items), 2)
     total_duration = sum(int(i.get("duration", 0) or 0) for i in data.items)
 
-    # Enforce working hours, admin blocks, and no overlap.
-    conflict = await _slot_conflict(data.booking_date, data.booking_time, total_duration)
+    # Enforce working hours, admin blocks, and no overlap (scoped to this location).
+    conflict = await _slot_conflict(data.booking_date, data.booking_time, total_duration, data.location_id)
     if conflict:
         raise HTTPException(status_code=409, detail=conflict)
 
@@ -894,6 +901,7 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         "total_duration": total_duration,
         "booking_date": data.booking_date,
         "booking_time": data.booking_time,
+        "location_id": data.location_id,
         "notes": data.notes,
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -1021,15 +1029,18 @@ async def get_blocked_slots(request: Request, session_token: Optional[str] = Coo
 
 @api_router.post("/admin/blocked-slots", response_model=BlockedSlot)
 async def create_blocked_slot(data: BlockedSlotCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    """Block a date (whole day) or a time range within a date (admin only)."""
+    """Block a date (whole day) or a time range within a date, at one location (admin only)."""
     await require_admin(request, session_token)
     if not data.date:
         raise HTTPException(status_code=400, detail="A date is required")
+    if not _is_valid_location(data.location_id):
+        raise HTTPException(status_code=400, detail="Please select a valid location")
 
     block_id = f"block_{uuid.uuid4().hex[:12]}"
     doc = {
         "block_id": block_id,
         "date": data.date,
+        "location_id": data.location_id,
         "start_time": data.start_time or None,
         "end_time": data.end_time or None,
         "reason": data.reason,
