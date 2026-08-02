@@ -22,7 +22,8 @@ const Admin = () => {
   const [messageFilter, setMessageFilter] = useState('all');
   const [appointmentFilter, setAppointmentFilter] = useState('all');
   const [blockedSlots, setBlockedSlots] = useState([]);
-  const [blockForm, setBlockForm] = useState({ date: '', start_time: '', end_time: '', reason: '' });
+  const [locations, setLocations] = useState([]);
+  const [blockForm, setBlockForm] = useState({ date: '', location_id: '', start_time: '', end_time: '', reason: '' });
   const dragIndex = useRef(null);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
@@ -56,7 +57,8 @@ const Admin = () => {
       { label: 'appointments', url: `${API}/appointments`, set: setAppointments },
       { label: 'users', url: `${API}/admin/users`, set: setUsers },
       { label: 'messages', url: `${API}/admin/contact`, set: setMessages },
-      { label: 'availability', url: `${API}/admin/blocked-slots`, set: setBlockedSlots }
+      { label: 'availability', url: `${API}/admin/blocked-slots`, set: setBlockedSlots },
+      { label: 'locations', url: `${API}/locations`, set: setLocations }
     ];
 
     const results = await Promise.allSettled(
@@ -220,15 +222,20 @@ const Admin = () => {
       toast.error('Please choose a date to block');
       return;
     }
+    if (!blockForm.location_id) {
+      toast.error('Please choose a location to block');
+      return;
+    }
     try {
       await axios.post(`${API}/admin/blocked-slots`, {
         date: blockForm.date,
+        location_id: blockForm.location_id,
         start_time: blockForm.start_time || null,
         end_time: blockForm.end_time || null,
         reason: blockForm.reason || null,
       }, { withCredentials: true });
       toast.success('Blocked time added');
-      setBlockForm({ date: '', start_time: '', end_time: '', reason: '' });
+      setBlockForm({ date: '', location_id: '', start_time: '', end_time: '', reason: '' });
       fetchData();
     } catch (error) {
       console.error('Error adding blocked slot:', error);
@@ -314,6 +321,8 @@ const Admin = () => {
   };
 
   if (!user || user.role !== 'admin') return null;
+
+  const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
 
   const messageCounts = {
     all: messages.length,
@@ -773,6 +782,9 @@ const Admin = () => {
                           <p className="font-semibold text-foreground flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-primary" />
                             {appt.booking_date} at {appt.booking_time}
+                            {locationName(appt.location_id) && (
+                              <span className="text-sm font-normal text-muted-foreground">· {locationName(appt.location_id)}</span>
+                            )}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             {appt.total_duration} min • €{(appt.total_amount || 0).toFixed(2)}
@@ -824,7 +836,22 @@ const Admin = () => {
                   Block a whole day (leave the times empty) or a time range within a day. Clients can't book blocked times.
                   Regular opening hours (Mon–Fri 13:00–18:00, Sat 10:00–13:00) are always enforced automatically.
                 </p>
-                <form onSubmit={handleAddBlock} className="bg-muted p-6 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" data-testid="block-form">
+                <form onSubmit={handleAddBlock} className="bg-muted p-6 rounded-xl mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end" data-testid="block-form">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" htmlFor="block-location">Location</label>
+                    <select
+                      id="block-location"
+                      value={blockForm.location_id}
+                      onChange={(e) => setBlockForm({ ...blockForm, location_id: e.target.value })}
+                      required
+                      className="w-full h-9 rounded-lg border border-border bg-background px-3"
+                    >
+                      <option value="" disabled>Choose a location</option>
+                      {locations.map((loc) => (
+                        <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium mb-2" htmlFor="block-date">Date</label>
                     <Input id="block-date" type="date" value={blockForm.date} onChange={(e) => setBlockForm({ ...blockForm, date: e.target.value })} required />
@@ -851,6 +878,7 @@ const Admin = () => {
                       <div key={b.block_id} className="border border-border rounded-xl p-4 flex items-center justify-between" data-testid={`block-${b.block_id}`}>
                         <div>
                           <p className="font-semibold text-foreground">
+                            {locationName(b.location_id) && `${locationName(b.location_id)} · `}
                             {b.date}
                             {b.start_time && b.end_time ? ` · ${b.start_time}–${b.end_time}` : ' · Whole day'}
                           </p>
