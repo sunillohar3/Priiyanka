@@ -135,6 +135,13 @@ def _is_valid_location(location_id) -> bool:
     return location_id in _VALID_LOCATION_IDS
 
 
+def _location_name(location_id) -> str:
+    for loc in LOCATIONS:
+        if loc["location_id"] == location_id:
+            return loc["name"]
+    return location_id or "Unknown"
+
+
 def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
     # Masked diagnostic so we can confirm the loaded key without exposing it.
     logging.info(
@@ -342,7 +349,7 @@ class Appointment(BaseModel):
     total_duration: int        # minutes
     booking_date: str
     booking_time: str
-    location_id: str
+    location_id: Optional[str] = None
     notes: Optional[str] = None
     status: str
     created_at: datetime
@@ -373,7 +380,7 @@ class BlockedSlot(BaseModel):
     model_config = ConfigDict(extra="ignore")
     block_id: str
     date: str
-    location_id: str
+    location_id: Optional[str] = None
     start_time: Optional[str] = None   # None = whole day blocked
     end_time: Optional[str] = None
     reason: Optional[str] = None
@@ -920,7 +927,7 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         ADMIN_NOTIFY_EMAIL,
         "New appointment request",
         f"New appointment from {user.name} ({user.email}).\n"
-        f"When: {when}\nTreatments: {treatments}\n"
+        f"When: {when}\nLocation: {_location_name(data.location_id)}\nTreatments: {treatments}\n"
         f"Duration: {total_duration} min\nTotal: €{total_amount:.2f}\n"
         f"Notes: {data.notes or '-'}"
     )
@@ -1015,7 +1022,7 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
         send_email,
         ADMIN_NOTIFY_EMAIL,
         "Appointment rescheduled",
-        f"{user.name} ({user.email}) moved their appointment to {data.booking_date} at {data.booking_time}."
+        f"{user.name} ({user.email}) moved their appointment to {data.booking_date} at {data.booking_time} ({_location_name(data.location_id)})."
     )
     return {"message": "Appointment rescheduled"}
 

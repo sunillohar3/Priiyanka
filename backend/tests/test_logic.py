@@ -75,3 +75,38 @@ def test_is_valid_location():
     assert server._is_valid_location("amsterdam") is False
     assert server._is_valid_location("") is False
     assert server._is_valid_location(None) is False
+
+
+def test_location_name():
+    assert server._location_name("voorburg") == "Voorburg"
+    assert server._location_name("the_hague_centre") == "The Hague Centre"
+    assert server._location_name("amsterdam") == "amsterdam"
+    assert server._location_name(None) == "Unknown"
+
+
+def test_appointment_model_tolerates_missing_location():
+    """Records created before this feature shipped have no location_id at all —
+    the response model must not reject them (would 500 the whole list endpoint)."""
+    doc = {
+        "appointment_id": "appt_x",
+        "user_id": "u_x",
+        "items": [],
+        "total_amount": 0.0,
+        "total_duration": 0,
+        "booking_date": "2026-01-01",
+        "booking_time": "14:00",
+        "status": "pending",
+        "created_at": server.datetime.now(server.timezone.utc),
+    }
+    appt = server.Appointment(**doc)
+    assert appt.location_id is None
+
+
+def test_blocked_slot_model_tolerates_missing_location():
+    doc = {
+        "block_id": "block_x",
+        "date": "2026-01-01",
+        "created_at": server.datetime.now(server.timezone.utc),
+    }
+    block = server.BlockedSlot(**doc)
+    assert block.location_id is None
