@@ -357,6 +357,7 @@ class AppointmentCreate(BaseModel):
 class RescheduleRequest(BaseModel):
     booking_date: str
     booking_time: str
+    location_id: str
 
 class ForgotPasswordRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=200)
@@ -985,7 +986,7 @@ async def cancel_appointment(appointment_id: str, request: Request, background_t
 
 @api_router.put("/appointments/{appointment_id}/reschedule")
 async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, request: Request, background_tasks: BackgroundTasks, session_token: Optional[str] = Cookie(None)):
-    """Move an appointment to a new date/time (owner or admin), re-checking availability."""
+    """Move an appointment to a new date/time/location (owner or admin), re-checking availability."""
     user = await get_current_user(request, session_token)
     appt = await db.appointments.find_one({"appointment_id": appointment_id}, {"_id": 0})
     if not appt:
@@ -994,10 +995,13 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
         raise HTTPException(status_code=403, detail="Not allowed")
     if appt["status"] in ("cancelled", "completed"):
         raise HTTPException(status_code=400, detail="This appointment can no longer be rescheduled.")
+    if not _is_valid_location(data.location_id):
+        raise HTTPException(status_code=400, detail="Please select a valid location")
 
     conflict = await _slot_conflict(
         data.booking_date, data.booking_time,
         int(appt.get("total_duration", 0) or 0),
+        data.location_id,
         exclude_id=appointment_id
     )
     if conflict:
@@ -1005,7 +1009,7 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
 
     await db.appointments.update_one(
         {"appointment_id": appointment_id},
-        {"$set": {"booking_date": data.booking_date, "booking_time": data.booking_time, "status": "pending"}}
+        {"$set": {"booking_date": data.booking_date, "booking_time": data.booking_time, "location_id": data.location_id, "status": "pending"}}
     )
     background_tasks.add_task(
         send_email,
