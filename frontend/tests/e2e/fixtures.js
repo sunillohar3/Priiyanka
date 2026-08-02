@@ -10,11 +10,18 @@ const SERVICES = [
     price: 80, duration: 60, category: 'Massage', image_url: '', display_order: 2 },
 ];
 
+const LOCATIONS = [
+  { location_id: 'voorburg', name: 'Voorburg' },
+  { location_id: 'the_hague_centre', name: 'The Hague Centre' },
+];
+
 const USER = { user_id: 'u-test', id: 'u-test', email: 'test@example.com', name: 'Test User', role: 'client' };
 
 async function stubBackend(page) {
   await page.route('**/api/services', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SERVICES) }));
+  await page.route('**/api/locations', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LOCATIONS) }));
   await page.route('**/api/contact', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }));
   await page.route('**/api/appointments', (route) =>
@@ -40,7 +47,7 @@ async function seedCart(page, items = [{ ...SERVICES[0], quantity: 1 }]) {
 const ADMIN = { user_id: 'u-admin', id: 'u-admin', email: 'admin@example.com', name: 'Admin User', role: 'admin', email_verified: true };
 
 const APPOINTMENTS = [
-  { appointment_id: 'appt-1', booking_date: '2030-01-02', booking_time: '10:00',
+  { appointment_id: 'appt-1', booking_date: '2030-01-02', booking_time: '10:00', location_id: 'voorburg',
     items: [{ name: 'Ayurvedic Consultation' }], total_amount: 65, status: 'pending' },
 ];
 
@@ -67,4 +74,4 @@ async function stubAdmin(page) {
   // NOTE: `**/api/services` (list) is stubbed by stubBackend; call stubBackend first.
 }
 
-module.exports = { stubBackend, stubAuth, seedCart, stubAdmin, SERVICES, USER, ADMIN, APPOINTMENTS };
+module.exports = { stubBackend, stubAuth, seedCart, stubAdmin, SERVICES, USER, ADMIN, APPOINTMENTS, LOCATIONS };

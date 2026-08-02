@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { Trash2, Euro, ShoppingBag, Calendar, Clock } from 'lucide-react';
+import { Trash2, Euro, ShoppingBag, Calendar, Clock, MapPin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -21,8 +21,14 @@ const Cart = () => {
   const navigate = useNavigate();
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [locations, setLocations] = useState([]);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    axios.get(`${API}/locations`).then((res) => setLocations(res.data)).catch(() => {});
+  }, []);
 
   const totalDuration = cartItems.reduce((sum, item) => sum + (item.duration || 0), 0);
 
@@ -33,8 +39,8 @@ const Cart = () => {
       toast.error(language === 'en' ? 'Please login to book an appointment' : 'Log in om een afspraak te maken');
       return;
     }
-    if (!date || !time) {
-      toast.error(language === 'en' ? 'Please select a date and time' : 'Selecteer een datum en tijd');
+    if (!date || !time || !location) {
+      toast.error(language === 'en' ? 'Please select a location, date and time' : 'Selecteer een locatie, datum en tijd');
       return;
     }
 
@@ -49,6 +55,7 @@ const Cart = () => {
         })),
         booking_date: date,
         booking_time: time,
+        location_id: location,
         notes
       };
 
@@ -150,7 +157,25 @@ const Cart = () => {
               {language === 'en' ? 'Choose your slot' : 'Kies uw tijdslot'}
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="appt-location" className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {t('booking.selectLocation')}
+                </Label>
+                <select
+                  id="appt-location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="" disabled>{language === 'en' ? 'Choose a location' : 'Kies een locatie'}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="appt-date" className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />

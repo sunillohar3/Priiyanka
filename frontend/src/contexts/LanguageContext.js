@@ -69,6 +69,7 @@ export const translations = {
       title: 'Book Appointment',
       selectDate: 'Select Date',
       selectTime: 'Select Time',
+      selectLocation: 'Select Location',
       notes: 'Additional Notes',
       submit: 'Book Appointment'
     },
@@ -157,6 +158,7 @@ export const translations = {
       title: 'Afspraak Maken',
       selectDate: 'Selecteer Datum',
       selectTime: 'Selecteer Tijd',
+      selectLocation: 'Selecteer Locatie',
       notes: 'Aanvullende Opmerkingen',
       submit: 'Boek Afspraak'
     },
