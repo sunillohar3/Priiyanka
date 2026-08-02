@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 import bcrypt
 import urllib.parse
 
@@ -837,11 +838,37 @@ def _hours_problem(date_str: str, time_str: str, duration: int):
     return None
 
 
+AMSTERDAM_TZ = ZoneInfo("Europe/Amsterdam")
+
+
+def _past_problem(date_str: str, time_str: str, now: datetime = None):
+    """Pure check that the requested date/time hasn't already passed,
+    evaluated in the business's own timezone. Assumes date_str/time_str are
+    already well-formed (checked by _hours_problem, called first in
+    _slot_conflict). `now` can be injected for testing; defaults to the
+    real current time."""
+    minutes = _time_to_minutes(time_str)
+    requested_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    requested = datetime(
+        requested_date.year, requested_date.month, requested_date.day,
+        minutes // 60, minutes % 60, tzinfo=AMSTERDAM_TZ
+    )
+    current = now or datetime.now(AMSTERDAM_TZ)
+    if requested < current:
+        return "Please choose a date and time in the future."
+    return None
+
+
 async def _slot_conflict(date_str: str, time_str: str, duration: int, location_id: str, exclude_id: str = None):
     """Return an error message if the requested visit is outside working hours,
-    inside a blocked slot at this location, or overlaps another appointment at
-    this location; else None. Locations are checked independently of each other."""
+    already in the past, inside a blocked slot at this location, or overlaps
+    another appointment at this location; else None. Locations are checked
+    independently of each other."""
     problem = _hours_problem(date_str, time_str, duration)
+    if problem:
+        return problem
+
+    problem = _past_problem(date_str, time_str)
     if problem:
         return problem
 

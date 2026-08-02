@@ -49,6 +49,27 @@ def test_hours_closed_and_out_of_range():
     assert server._hours_problem("nope", "14:00", 60) is not None   # invalid date
 
 
+from datetime import datetime as _dt
+
+
+def test_past_problem_rejects_clearly_past_date():
+    assert server._past_problem("2020-01-01", "14:00") is not None
+
+
+def test_past_problem_rejects_past_time_today():
+    now = _dt(2026, 1, 5, 15, 0, tzinfo=server.AMSTERDAM_TZ)  # Monday 15:00
+    assert server._past_problem("2026-01-05", "14:00", now=now) is not None
+
+
+def test_past_problem_allows_future_time_today():
+    now = _dt(2026, 1, 5, 10, 0, tzinfo=server.AMSTERDAM_TZ)  # Monday 10:00
+    assert server._past_problem("2026-01-05", "14:00", now=now) is None
+
+
+def test_past_problem_allows_far_future_date():
+    assert server._past_problem("2099-01-01", "14:00") is None
+
+
 def test_rate_limit_allows_then_blocks():
     req = types.SimpleNamespace(headers={"x-forwarded-for": "9.9.9.9"}, client=None)
     for _ in range(3):
