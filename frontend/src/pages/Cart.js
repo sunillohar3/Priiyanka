@@ -27,7 +27,9 @@ const Cart = () => {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    axios.get(`${API}/locations`).then((res) => setLocations(res.data)).catch(() => {});
+    axios.get(`${API}/locations`).then((res) => setLocations(res.data)).catch(() => {
+      toast.error(language === 'en' ? 'Could not load locations. Please refresh the page.' : 'Kan locaties niet laden. Vernieuw de pagina.');
+    });
   }, []);
 
   const totalDuration = cartItems.reduce((sum, item) => sum + (item.duration || 0), 0);
