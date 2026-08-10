@@ -128,10 +128,13 @@ const About = () => {
                           <h3 className="font-semibold text-foreground">Registrations</h3>
                         </div>
                         <ul className="space-y-2 text-sm">
-                          <li>• LVNT Registered Therapist</li>
-                          <li>• RBCZ Registration</li>
+                          <li>• LVNT: 26.005</li>
+                          <li>• RBCZ: 260022S</li>
                           <li>• KVK: 98872109</li>
                           <li>• VAT: NL005359083B24</li>
+                          <li>• AGB Healthcare Provider: 90121714</li>
+                          <li>• AGB Praktijk Code: 90096729</li>
+                          <li>• Prestatie code: 24014</li>
                         </ul>
                       </div>
 
@@ -162,10 +165,13 @@ const About = () => {
                           <h3 className="font-semibold text-foreground">Registraties</h3>
                         </div>
                         <ul className="space-y-2 text-sm">
-                          <li>• LVNT Geregistreerde Therapeut</li>
-                          <li>• RBCZ Registratie</li>
+                          <li>• LVNT: 26.005</li>
+                          <li>• RBCZ: 260022S</li>
                           <li>• KVK: 98872109</li>
                           <li>• BTW: NL005359083B24</li>
+                          <li>• AGB Zorgverlener: 90121714</li>
+                          <li>• AGB Praktijkcode: 90096729</li>
+                          <li>• Prestatiecode: 24014</li>
                         </ul>
                       </div>
 
