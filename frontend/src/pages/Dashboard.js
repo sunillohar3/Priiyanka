@@ -235,7 +235,7 @@ const Dashboard = () => {
                       {rescheduleId === appt.appointment_id ? (
                         <div className="flex flex-wrap items-end gap-3 bg-muted/50 p-3 rounded-xl">
                           <div className="space-y-1">
-                            <Label htmlFor={`rl-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Location' : 'Locatie'}</Label>
+                            <Label htmlFor={`rl-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Location' : 'Locatie'}</Label>
                             <select
                               id={`rl-${appt.appointment_id}`}
                               value={rLocation}
@@ -249,7 +249,7 @@ const Dashboard = () => {
                             </select>
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor={`rc-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Consultation Type' : 'Consulttype'}</Label>
+                            <Label htmlFor={`rc-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Consultation Type' : 'Consulttype'}</Label>
                             <select
                               id={`rc-${appt.appointment_id}`}
                               value={rConsultationType}
@@ -262,11 +262,11 @@ const Dashboard = () => {
                             </select>
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor={`rd-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Date' : 'Datum'}</Label>
+                            <Label htmlFor={`rd-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Date' : 'Datum'}</Label>
                             <Input id={`rd-${appt.appointment_id}`} type="date" min={getMinDate()} value={rDate} onChange={(e) => setRDate(e.target.value)} className="h-9" />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor={`rt-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Time' : 'Tijd'}</Label>
+                            <Label htmlFor={`rt-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Time' : 'Tijd'}</Label>
                             <Input id={`rt-${appt.appointment_id}`} type="time" value={rTime} onChange={(e) => setRTime(e.target.value)} className="h-9" />
                           </div>
                           <Button size="sm" onClick={() => submitReschedule(appt.appointment_id)} disabled={busy}>

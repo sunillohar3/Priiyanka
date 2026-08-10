@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { Trash2, Euro, ShoppingBag, Calendar, Clock, MapPin } from 'lucide-react';
+import { Trash2, Euro, ShoppingBag, Calendar, Clock, MapPin, Stethoscope } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -186,7 +186,8 @@ const Cart = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="appt-consultation-type">
+                <Label htmlFor="appt-consultation-type" className="flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4" />
                   {language === 'en' ? 'Consultation Type' : 'Consulttype'}
                 </Label>
                 <select
