@@ -23,6 +23,7 @@ const Cart = () => {
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
   const [locations, setLocations] = useState([]);
+  const [consultationType, setConsultationType] = useState('');
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -42,8 +43,8 @@ const Cart = () => {
       toast.error(language === 'en' ? 'Please login to book an appointment' : 'Log in om een afspraak te maken');
       return;
     }
-    if (!date || !time || !location) {
-      toast.error(language === 'en' ? 'Please select a location, date and time' : 'Selecteer een locatie, datum en tijd');
+    if (!date || !time || !location || !consultationType) {
+      toast.error(language === 'en' ? 'Please select a location, consultation type, date and time' : 'Selecteer een locatie, consulttype, datum en tijd');
       return;
     }
     if (new Date(`${date}T${time}`) < new Date()) {
@@ -63,6 +64,7 @@ const Cart = () => {
         booking_date: date,
         booking_time: time,
         location_id: location,
+        consultation_type: consultationType,
         notes
       };
 
@@ -164,7 +166,7 @@ const Cart = () => {
               {language === 'en' ? 'Choose your slot' : 'Kies uw tijdslot'}
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="appt-location" className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
@@ -181,6 +183,22 @@ const Cart = () => {
                   {locations.map((loc) => (
                     <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
                   ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="appt-consultation-type">
+                  {language === 'en' ? 'Consultation Type' : 'Consulttype'}
+                </Label>
+                <select
+                  id="appt-consultation-type"
+                  value={consultationType}
+                  onChange={(e) => setConsultationType(e.target.value)}
+                  required
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="" disabled>{language === 'en' ? 'Choose a type' : 'Kies een type'}</option>
+                  <option value="online">{language === 'en' ? 'Online' : 'Online'}</option>
+                  <option value="offline">{language === 'en' ? 'Offline' : 'Offline'}</option>
                 </select>
               </div>
               <div className="space-y-2">
