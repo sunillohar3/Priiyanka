@@ -323,6 +323,7 @@ const Admin = () => {
   if (!user || user.role !== 'admin') return null;
 
   const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
+  const consultationTypeLabel = (value) => (value === 'online' ? 'Online' : value === 'offline' ? 'Offline' : '');
 
   const messageCounts = {
     all: messages.length,
@@ -784,6 +785,9 @@ const Admin = () => {
                             {appt.booking_date} at {appt.booking_time}
                             {locationName(appt.location_id) && (
                               <span className="text-sm font-normal text-muted-foreground">· {locationName(appt.location_id)}</span>
+                            )}
+                            {consultationTypeLabel(appt.consultation_type) && (
+                              <span className="text-sm font-normal text-muted-foreground">· {consultationTypeLabel(appt.consultation_type)}</span>
                             )}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
