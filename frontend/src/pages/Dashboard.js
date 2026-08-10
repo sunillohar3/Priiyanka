@@ -55,7 +55,7 @@ const Dashboard = () => {
 
   const getMinDate = () => new Date().toISOString().split('T')[0];
   const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
-  const consultationTypeLabel = (value) => (value === 'online' ? (language === 'en' ? 'Online' : 'Online') : value === 'offline' ? (language === 'en' ? 'Offline' : 'Offline') : '');
+  const consultationTypeLabel = (value) => (value === 'online' ? 'Online' : value === 'offline' ? 'Offline' : '');
 
   const handleResend = async () => {
     try {

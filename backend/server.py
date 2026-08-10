@@ -979,7 +979,7 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         ADMIN_NOTIFY_EMAIL,
         "New appointment request",
         f"New appointment from {user.name} ({user.email}).\n"
-        f"When: {when}\nLocation: {_location_name(data.location_id)}\nTreatments: {treatments}\n"
+        f"When: {when}\nLocation: {_location_name(data.location_id)}\nConsultation type: {data.consultation_type.capitalize()}\nTreatments: {treatments}\n"
         f"Duration: {total_duration} min\nTotal: €{total_amount:.2f}\n"
         f"Notes: {data.notes or '-'}"
     )
@@ -1077,7 +1077,7 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
         send_email,
         ADMIN_NOTIFY_EMAIL,
         "Appointment rescheduled",
-        f"{user.name} ({user.email}) moved their appointment to {data.booking_date} at {data.booking_time} ({_location_name(data.location_id)})."
+        f"{user.name} ({user.email}) moved their appointment to {data.booking_date} at {data.booking_time} ({_location_name(data.location_id)}, {data.consultation_type.capitalize()})."
     )
     return {"message": "Appointment rescheduled"}
 
