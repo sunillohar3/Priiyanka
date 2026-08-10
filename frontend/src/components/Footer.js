@@ -72,9 +72,12 @@ const Footer = () => {
               <Link to="/suggestions" className="block hover:text-accent transition-colors">{t('footer.suggestions')}</Link>
               <p className="text-primary-foreground/80 mt-4">KVK: 98872109</p>
               <p className="text-primary-foreground/80">VAT: NL005359083B24</p>
-              <p className="text-primary-foreground/80 mt-2">LVNT Member</p>
-              <p className="text-primary-foreground/80">RBCZ Registered</p>
+              <p className="text-primary-foreground/80 mt-2">LVNT: 26.005</p>
+              <p className="text-primary-foreground/80">RBCZ: 260022S</p>
               <p className="text-primary-foreground/80">TCZ Registered</p>
+              <p className="text-primary-foreground/80">AGB Healthcare Provider: 90121714</p>
+              <p className="text-primary-foreground/80">AGB Praktijk Code: 90096729</p>
+              <p className="text-primary-foreground/80">Prestatie code: 24014</p>
             </div>
           </div>
 

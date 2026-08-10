@@ -164,7 +164,27 @@ const Contact = () => {
 
           {/* Contact details */}
           <Reveal delay={0.1} className="space-y-8">
-            {/* Location 1 — Voorburg (address + hours) */}
+            {/* Location 1 — The Hague (address + hours) */}
+            <div className="bg-card p-8 rounded-2xl border border-border">
+              <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc2Name')}</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                  <p className="text-muted-foreground">
+                    Badhuisstraat 224<br />
+                    2584 HN
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+                  <div className="text-muted-foreground space-y-1">
+                    <p>{t('contact.loc2Hours')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Location 2 — Voorburg (address + hours) */}
             <div className="bg-card p-8 rounded-2xl border border-border">
               <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc1Name')}</h3>
               <div className="space-y-4">
@@ -180,26 +200,6 @@ const Contact = () => {
                   <div className="text-muted-foreground space-y-1">
                     <p>{t('contact.mondayFriday')}</p>
                     <p>{t('contact.saturday')}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Location 2 — The Hague (address + hours) */}
-            <div className="bg-card p-8 rounded-2xl border border-border">
-              <h3 className="font-heading text-xl font-semibold text-foreground mb-4">{t('contact.loc2Name')}</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-                  <p className="text-muted-foreground">
-                    Badhuisstraat 224<br />
-                    2584 HN
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-                  <div className="text-muted-foreground space-y-1">
-                    <p>{t('contact.loc2Hours')}</p>
                   </div>
                 </div>
               </div>
