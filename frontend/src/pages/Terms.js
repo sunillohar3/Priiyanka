@@ -24,7 +24,7 @@ const Terms = () => {
                 <section>
                   <h2 className="text-2xl font-heading font-semibold text-foreground mt-8 mb-4">Services</h2>
                   <p>
-                    Priiyanka's Nature Nest provides Ayurvedic consultations and treatments. All services are provided by VD. Priiyanka Singh (B.A.M.S), a certified Ayurvedic consultant registered with LVNT.
+                    Priiyanka's Nature Nest provides Ayurvedic consultations and treatments. All services are provided by VD. Priyanka Singh (B.A.M.S), a certified Ayurvedic consultant registered with LVNT.
                   </p>
                 </section>
               </Reveal>
@@ -74,7 +74,7 @@ const Terms = () => {
                 <section>
                   <h2 className="text-2xl font-heading font-semibold text-foreground mt-8 mb-4">Diensten</h2>
                   <p>
-                    Priiyanka's Nature Nest biedt Ayurvedische consulten en behandelingen. Alle diensten worden verleend door VD. Priiyanka Singh (B.A.M.S), een gecertificeerde Ayurvedische consultant geregistreerd bij LVNT.
+                    Priiyanka's Nature Nest biedt Ayurvedische consulten en behandelingen. Alle diensten worden verleend door VD. Priyanka Singh (B.A.M.S), een gecertificeerde Ayurvedische consultant geregistreerd bij LVNT.
                   </p>
                 </section>
               </Reveal>

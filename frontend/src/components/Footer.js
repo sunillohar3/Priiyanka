@@ -15,7 +15,7 @@ const Footer = () => {
             <h3 className="font-heading text-xl font-bold mb-4">Priiyanka's Nature Nest</h3>
             <p className="text-sm text-primary-foreground/80 italic">"Where Nature Nurtures You"</p>
             <p className="text-sm text-primary-foreground/80 mt-4">
-              VD. Priiyanka Singh<br />
+              VD. Priyanka Singh<br />
               B.A.M.S Ayurvedic Consultant
             </p>
             <div className="mt-6 flex flex-wrap gap-3 items-center">

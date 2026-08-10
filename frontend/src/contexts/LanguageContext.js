@@ -30,7 +30,7 @@ export const translations = {
       minutes: 'min'
     },
     about: {
-      title: 'About VD. Priiyanka Singh',
+      title: 'About VD. Priyanka Singh',
       subtitle: 'B.A.M.S Ayurvedic Consultant'
     },
     contact: {
@@ -40,7 +40,6 @@ export const translations = {
       email: 'Email',
       hours: 'Operating Hours',
       mondayFriday: 'Monday, Wednesday & Friday: 13:00 - 18:00',
-      saturday: 'Saturday: 10:00 - 13:00',
       locationsHeading: 'Our Locations',
       loc1Name: 'Voorburg (Online)',
       loc2Name: 'The Hague Natural Health Centre',
@@ -119,7 +118,7 @@ export const translations = {
       minutes: 'min'
     },
     about: {
-      title: 'Over VD. Priiyanka Singh',
+      title: 'Over VD. Priyanka Singh',
       subtitle: 'B.A.M.S Ayurvedische Consultant'
     },
     contact: {
@@ -129,7 +128,6 @@ export const translations = {
       email: 'E-mail',
       hours: 'Openingstijden',
       mondayFriday: 'Maandag, Woensdag & Vrijdag: 13:00 - 18:00',
-      saturday: 'Zaterdag: 10:00 - 13:00',
       locationsHeading: 'Onze Locaties',
       loc1Name: 'Voorburg (Online)',
       loc2Name: 'The Hague Natural Health Centre',

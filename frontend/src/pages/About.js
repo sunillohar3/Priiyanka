@@ -9,8 +9,8 @@ const About = () => {
 
   useSEO(
     language === 'en'
-      ? "About VD. Priiyanka Singh | Ayurvedic Consultant"
-      : "Over VD. Priiyanka Singh | Ayurvedisch Consultant",
+      ? "About VD. Priyanka Singh | Ayurvedic Consultant"
+      : "Over VD. Priyanka Singh | Ayurvedisch Consultant",
     language === 'en'
       ? 'B.A.M.S Ayurvedic physician with 13+ years of clinical experience, practicing holistic Ayurvedic care in Voorburg, Netherlands.'
       : 'B.A.M.S Ayurvedisch arts met 13+ jaar klinische ervaring, holistische Ayurvedische zorg in Voorburg, Nederland.'
@@ -22,7 +22,7 @@ const About = () => {
         <Reveal>
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-6xl font-heading font-bold text-foreground mb-4">
-              {language === 'en' ? 'About VD. Priiyanka Singh' : 'Over VD. Priiyanka Singh'}
+              {language === 'en' ? 'About VD. Priyanka Singh' : 'Over VD. Priyanka Singh'}
             </h1>
             <p className="text-xl text-muted-foreground">
               B.A.M.S Ayurvedic Consultant
@@ -37,7 +37,7 @@ const About = () => {
               <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border-4 border-primary shadow-2xl">
                 <img
                   src="/assets/profile.jpg"
-                  alt="VD. Priiyanka Singh"
+                  alt="VD. Priyanka Singh"
                   className="w-full h-full object-cover"
                 />
               </div>

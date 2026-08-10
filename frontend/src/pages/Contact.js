@@ -199,7 +199,6 @@ const Contact = () => {
                   <Clock className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                   <div className="text-muted-foreground space-y-1">
                     <p>{t('contact.mondayFriday')}</p>
-                    <p>{t('contact.saturday')}</p>
                   </div>
                 </div>
               </div>
