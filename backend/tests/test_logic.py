@@ -105,6 +105,32 @@ def test_location_name():
     assert server._location_name(None) == "Unknown"
 
 
+def test_is_valid_consultation_type():
+    assert server._is_valid_consultation_type("online") is True
+    assert server._is_valid_consultation_type("offline") is True
+    assert server._is_valid_consultation_type("hybrid") is False
+    assert server._is_valid_consultation_type("") is False
+    assert server._is_valid_consultation_type(None) is False
+
+
+def test_appointment_model_tolerates_missing_consultation_type():
+    """Records created before this feature shipped have no consultation_type
+    at all — the response model must not reject them."""
+    doc = {
+        "appointment_id": "appt_y",
+        "user_id": "u_y",
+        "items": [],
+        "total_amount": 0.0,
+        "total_duration": 0,
+        "booking_date": "2026-01-01",
+        "booking_time": "14:00",
+        "status": "pending",
+        "created_at": server.datetime.now(server.timezone.utc),
+    }
+    appt = server.Appointment(**doc)
+    assert appt.consultation_type is None
+
+
 def test_appointment_model_tolerates_missing_location():
     """Records created before this feature shipped have no location_id at all —
     the response model must not reject them (would 500 the whole list endpoint)."""

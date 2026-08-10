@@ -142,6 +142,14 @@ def _location_name(location_id) -> str:
             return loc["name"]
     return location_id or "Unknown"
 
+# Two fixed, independent booking modes — no admin UI, no name-lookup needed
+# (the values are already display-ready labels once capitalized).
+CONSULTATION_TYPES = {"online", "offline"}
+
+
+def _is_valid_consultation_type(value) -> bool:
+    return value in CONSULTATION_TYPES
+
 
 def _send_via_brevo(to_address: str, subject: str, body: str) -> None:
     # Masked diagnostic so we can confirm the loaded key without exposing it.
@@ -351,6 +359,7 @@ class Appointment(BaseModel):
     booking_date: str
     booking_time: str
     location_id: Optional[str] = None
+    consultation_type: Optional[str] = None
     notes: Optional[str] = None
     status: str
     created_at: datetime
@@ -360,12 +369,14 @@ class AppointmentCreate(BaseModel):
     booking_date: str
     booking_time: str
     location_id: str
+    consultation_type: str
     notes: Optional[str] = None
 
 class RescheduleRequest(BaseModel):
     booking_date: str
     booking_time: str
     location_id: str
+    consultation_type: str
 
 class ForgotPasswordRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=200)
@@ -859,11 +870,14 @@ def _past_problem(date_str: str, time_str: str, now: datetime = None):
     return None
 
 
-async def _slot_conflict(date_str: str, time_str: str, duration: int, location_id: str, exclude_id: str = None):
+async def _slot_conflict(date_str: str, time_str: str, duration: int, location_id: str, consultation_type: str, exclude_id: str = None):
     """Return an error message if the requested visit is outside working hours,
     already in the past, inside a blocked slot at this location, or overlaps
     another appointment at this location; else None. Locations are checked
-    independently of each other."""
+    independently of each other, and so are consultation types — except a
+    legacy appointment with no consultation_type on file (predates this
+    field) still conflicts regardless of the new request's mode, since we
+    don't actually know what mode it was."""
     problem = _hours_problem(date_str, time_str, duration)
     if problem:
         return problem
@@ -876,14 +890,22 @@ async def _slot_conflict(date_str: str, time_str: str, duration: int, location_i
     end = start + duration
 
     # Admin-blocked slots (whole-day, or a time range) at this location.
+    # Blocked slots apply to both consultation types uniformly.
     for s in await db.blocked_slots.find({"date": date_str, "location_id": location_id}, {"_id": 0}).to_list(1000):
         st = _time_to_minutes(s.get("start_time")) if s.get("start_time") else None
         et = _time_to_minutes(s.get("end_time")) if s.get("end_time") else None
         if st is None or et is None or (start < et and st < end):
             return "That time is unavailable. Please choose another."
 
-    # Overlap with existing (non-cancelled) appointments at this location.
-    for a in await db.appointments.find({"booking_date": date_str, "location_id": location_id, "status": {"$ne": "cancelled"}}, {"_id": 0}).to_list(1000):
+    # Overlap with existing (non-cancelled) appointments at this location and
+    # consultation type. A record with no consultation_type on file (legacy,
+    # predates this field) matches regardless of the requested type.
+    for a in await db.appointments.find({
+        "booking_date": date_str,
+        "location_id": location_id,
+        "consultation_type": {"$in": [consultation_type, None]},
+        "status": {"$ne": "cancelled"}
+    }, {"_id": 0}).to_list(1000):
         if exclude_id and a.get("appointment_id") == exclude_id:
             continue
         s2 = _time_to_minutes(a.get("booking_time", ""))
@@ -918,12 +940,14 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         raise HTTPException(status_code=400, detail="Please select a date and time")
     if not _is_valid_location(data.location_id):
         raise HTTPException(status_code=400, detail="Please select a valid location")
+    if not _is_valid_consultation_type(data.consultation_type):
+        raise HTTPException(status_code=400, detail="Please select a valid consultation type")
 
     total_amount = round(sum(float(i.get("price", 0)) for i in data.items), 2)
     total_duration = sum(int(i.get("duration", 0) or 0) for i in data.items)
 
     # Enforce working hours, admin blocks, and no overlap (scoped to this location).
-    conflict = await _slot_conflict(data.booking_date, data.booking_time, total_duration, data.location_id)
+    conflict = await _slot_conflict(data.booking_date, data.booking_time, total_duration, data.location_id, data.consultation_type)
     if conflict:
         raise HTTPException(status_code=409, detail=conflict)
 
@@ -937,6 +961,7 @@ async def create_appointment(data: AppointmentCreate, request: Request, backgrou
         "booking_date": data.booking_date,
         "booking_time": data.booking_time,
         "location_id": data.location_id,
+        "consultation_type": data.consultation_type,
         "notes": data.notes,
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -1031,11 +1056,14 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
         raise HTTPException(status_code=400, detail="This appointment can no longer be rescheduled.")
     if not _is_valid_location(data.location_id):
         raise HTTPException(status_code=400, detail="Please select a valid location")
+    if not _is_valid_consultation_type(data.consultation_type):
+        raise HTTPException(status_code=400, detail="Please select a valid consultation type")
 
     conflict = await _slot_conflict(
         data.booking_date, data.booking_time,
         int(appt.get("total_duration", 0) or 0),
         data.location_id,
+        data.consultation_type,
         exclude_id=appointment_id
     )
     if conflict:
@@ -1043,7 +1071,7 @@ async def reschedule_appointment(appointment_id: str, data: RescheduleRequest, r
 
     await db.appointments.update_one(
         {"appointment_id": appointment_id},
-        {"$set": {"booking_date": data.booking_date, "booking_time": data.booking_time, "location_id": data.location_id, "status": "pending"}}
+        {"$set": {"booking_date": data.booking_date, "booking_time": data.booking_time, "location_id": data.location_id, "consultation_type": data.consultation_type, "status": "pending"}}
     )
     background_tasks.add_task(
         send_email,
