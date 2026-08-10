@@ -47,7 +47,7 @@ async function seedCart(page, items = [{ ...SERVICES[0], quantity: 1 }]) {
 const ADMIN = { user_id: 'u-admin', id: 'u-admin', email: 'admin@example.com', name: 'Admin User', role: 'admin', email_verified: true };
 
 const APPOINTMENTS = [
-  { appointment_id: 'appt-1', booking_date: '2030-01-02', booking_time: '10:00', location_id: 'voorburg',
+  { appointment_id: 'appt-1', booking_date: '2030-01-02', booking_time: '10:00', location_id: 'voorburg', consultation_type: 'offline',
     items: [{ name: 'Ayurvedic Consultation' }], total_amount: 65, status: 'pending' },
 ];
 

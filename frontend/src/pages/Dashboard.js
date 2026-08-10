@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [rDate, setRDate] = useState('');
   const [rTime, setRTime] = useState('');
   const [rLocation, setRLocation] = useState('');
+  const [rConsultationType, setRConsultationType] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ const Dashboard = () => {
 
   const getMinDate = () => new Date().toISOString().split('T')[0];
   const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
+  const consultationTypeLabel = (value) => (value === 'online' ? (language === 'en' ? 'Online' : 'Online') : value === 'offline' ? (language === 'en' ? 'Offline' : 'Offline') : '');
 
   const handleResend = async () => {
     try {
@@ -83,11 +85,12 @@ const Dashboard = () => {
     setRDate(appt.booking_date);
     setRTime(appt.booking_time);
     setRLocation(appt.location_id || '');
+    setRConsultationType(appt.consultation_type || '');
   };
 
   const submitReschedule = async (id) => {
-    if (!rDate || !rTime || !rLocation) {
-      toast.error(language === 'en' ? 'Please choose a location, date and time.' : 'Kies een locatie, datum en tijd.');
+    if (!rDate || !rTime || !rLocation || !rConsultationType) {
+      toast.error(language === 'en' ? 'Please choose a location, consultation type, date and time.' : 'Kies een locatie, consulttype, datum en tijd.');
       return;
     }
     if (new Date(`${rDate}T${rTime}`) < new Date()) {
@@ -96,7 +99,7 @@ const Dashboard = () => {
     }
     setBusy(true);
     try {
-      await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime, location_id: rLocation }, { withCredentials: true });
+      await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime, location_id: rLocation, consultation_type: rConsultationType }, { withCredentials: true });
       toast.success(language === 'en' ? 'Appointment rescheduled.' : 'Afspraak verzet.');
       setRescheduleId(null);
       fetchData();
@@ -206,6 +209,9 @@ const Dashboard = () => {
                             <MapPin className="w-3.5 h-3.5" /> {locationName(appt.location_id)}
                           </span>
                         )}
+                        {consultationTypeLabel(appt.consultation_type) && (
+                          <span className="text-sm font-normal text-muted-foreground">· {consultationTypeLabel(appt.consultation_type)}</span>
+                        )}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(appt.items || []).map((it, idx) => (
@@ -240,6 +246,19 @@ const Dashboard = () => {
                               {locations.map((loc) => (
                                 <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
                               ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor={`rc-${appt.appointment_id}`} className="text-xs">{language === 'en' ? 'Consultation Type' : 'Consulttype'}</Label>
+                            <select
+                              id={`rc-${appt.appointment_id}`}
+                              value={rConsultationType}
+                              onChange={(e) => setRConsultationType(e.target.value)}
+                              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                            >
+                              <option value="" disabled>{language === 'en' ? 'Choose a type' : 'Kies een type'}</option>
+                              <option value="online">{language === 'en' ? 'Online' : 'Online'}</option>
+                              <option value="offline">{language === 'en' ? 'Offline' : 'Offline'}</option>
                             </select>
                           </div>
                           <div className="space-y-1">
