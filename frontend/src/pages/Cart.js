@@ -14,6 +14,23 @@ import API from '../lib/api';
 import Reveal from '../components/common/Reveal';
 import Stagger from '../components/common/Stagger';
 
+// Each open weekday is pinned to a single location — Voorburg on Monday and
+// Friday, The Hague Centre on Tuesday, Wednesday and Thursday. Closed
+// Saturday and Sunday. Must stay in sync with backend WORKING_HOURS.
+const DAY_SCHEDULE = {
+  1: { location_id: 'voorburg', start: '13:00', end: '18:00' },
+  2: { location_id: 'the_hague_centre', start: '10:00', end: '16:00' },
+  3: { location_id: 'the_hague_centre', start: '12:00', end: '16:00' },
+  4: { location_id: 'the_hague_centre', start: '10:00', end: '16:00' },
+  5: { location_id: 'voorburg', start: '13:00', end: '18:00' },
+};
+
+const scheduleForDate = (value) => {
+  if (!value) return null;
+  const [y, m, d] = value.split('-').map(Number);
+  return DAY_SCHEDULE[new Date(y, m - 1, d).getDay()] || null;
+};
+
 const Cart = () => {
   const { cartItems, removeFromCart, getTotal, clearCart } = useCart();
   const { t, language } = useLanguage();
@@ -35,8 +52,27 @@ const Cart = () => {
   }, []);
 
   const totalDuration = cartItems.reduce((sum, item) => sum + (item.duration || 0), 0);
+  const schedule = scheduleForDate(date);
 
   const getMinDate = () => new Date().toISOString().split('T')[0];
+
+  const handleDateChange = (value) => {
+    const nextSchedule = scheduleForDate(value);
+    if (value && !nextSchedule) {
+      toast.error(
+        language === 'en'
+          ? 'We are closed on the selected day. Please choose Monday, Tuesday, Wednesday, Thursday or Friday.'
+          : 'We zijn op de gekozen dag gesloten. Kies maandag, dinsdag, woensdag, donderdag of vrijdag.'
+      );
+      setDate('');
+      setLocation('');
+      setTime('');
+      return;
+    }
+    setDate(value);
+    setLocation(nextSchedule ? nextSchedule.location_id : '');
+    setTime('');
+  };
 
   const handleConfirm = async () => {
     if (!user) {
@@ -172,18 +208,15 @@ const Cart = () => {
                   <MapPin className="w-4 h-4" />
                   {t('booking.selectLocation')}
                 </Label>
-                <select
+                <div
                   id="appt-location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  required
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  data-testid="appt-location-display"
+                  className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground"
                 >
-                  <option value="" disabled>{language === 'en' ? 'Choose a location' : 'Kies een locatie'}</option>
-                  {locations.map((loc) => (
-                    <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
-                  ))}
-                </select>
+                  {location
+                    ? (locations.find((loc) => loc.location_id === location)?.name || location)
+                    : (language === 'en' ? 'Select a date first' : 'Kies eerst een datum')}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="appt-consultation-type" className="flex items-center gap-2">
@@ -212,7 +245,7 @@ const Cart = () => {
                   type="date"
                   min={getMinDate()}
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => handleDateChange(e.target.value)}
                   required
                 />
               </div>
@@ -220,12 +253,16 @@ const Cart = () => {
                 <Label htmlFor="appt-time" className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   {t('booking.selectTime')}
+                  {schedule && <span className="text-xs font-normal text-muted-foreground">({schedule.start}-{schedule.end})</span>}
                 </Label>
                 <Input
                   id="appt-time"
                   type="time"
+                  min={schedule?.start}
+                  max={schedule?.end}
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
+                  disabled={!date}
                   required
                 />
               </div>

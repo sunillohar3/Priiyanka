@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Input } from './ui/input';
+import { PasswordInput } from './ui/password-input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
@@ -290,9 +291,8 @@ const Navbar = () => {
                           <Label htmlFor="login-password">
                             {t('auth.password')} <span className="text-destructive" aria-hidden="true">*</span>
                           </Label>
-                          <Input
+                          <PasswordInput
                             id="login-password"
-                            type="password"
                             autoComplete="current-password"
                             value={loginPassword}
                             onChange={(e) => { setLoginPassword(e.target.value); if (loginErrors.password) setLoginErrors((p) => ({ ...p, password: undefined })); }}
@@ -388,9 +388,8 @@ const Navbar = () => {
                           <Label htmlFor="register-password">
                             {t('auth.password')} <span className="text-destructive" aria-hidden="true">*</span>
                           </Label>
-                          <Input
+                          <PasswordInput
                             id="register-password"
-                            type="password"
                             autoComplete="new-password"
                             value={registerPassword}
                             onChange={(e) => { setRegisterPassword(e.target.value); if (registerErrors.password) setRegisterErrors((p) => ({ ...p, password: undefined })); }}

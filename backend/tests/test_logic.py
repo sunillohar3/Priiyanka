@@ -33,13 +33,19 @@ def test_time_to_minutes():
 
 
 def test_hours_within_working_day():
-    monday = _next_weekday(0)          # Mon 13:00-18:00
+    monday = _next_weekday(0)          # Mon 13:00-18:00, Voorburg
     assert server._hours_problem(monday, "14:00", 60) is None
-    saturday = _next_weekday(5)        # Sat 10:00-13:00
-    assert server._hours_problem(saturday, "10:00", 60) is None
+    tuesday = _next_weekday(1)         # Tue 10:00-16:00, The Hague Centre
+    assert server._hours_problem(tuesday, "10:00", 60) is None
+    wednesday = _next_weekday(2)       # Wed 12:00-16:00, The Hague Centre
+    assert server._hours_problem(wednesday, "12:00", 60) is None
+    friday = _next_weekday(4)          # Fri 13:00-18:00, Voorburg
+    assert server._hours_problem(friday, "17:00", 60) is None
 
 
 def test_hours_closed_and_out_of_range():
+    saturday = _next_weekday(5)        # closed
+    assert server._hours_problem(saturday, "10:00", 60) is not None
     sunday = _next_weekday(6)          # closed
     assert server._hours_problem(sunday, "12:00", 60) is not None
     monday = _next_weekday(0)
@@ -47,6 +53,15 @@ def test_hours_closed_and_out_of_range():
     assert server._hours_problem(monday, "17:30", 60) is not None   # runs past 18:00
     assert server._hours_problem(monday, "bad", 60) is not None     # invalid time
     assert server._hours_problem("nope", "14:00", 60) is not None   # invalid date
+
+
+def test_hours_reject_wrong_location_for_weekday():
+    monday = _next_weekday(0)          # Monday is Voorburg-only
+    assert server._hours_problem(monday, "14:00", 60, "the_hague_centre") is not None
+    assert server._hours_problem(monday, "14:00", 60, "voorburg") is None
+    tuesday = _next_weekday(1)         # Tuesday is The Hague Centre-only
+    assert server._hours_problem(tuesday, "11:00", 60, "voorburg") is not None
+    assert server._hours_problem(tuesday, "11:00", 60, "the_hague_centre") is None
 
 
 from datetime import datetime as _dt

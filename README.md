@@ -148,7 +148,7 @@ REACT_APP_BACKEND_URL=http://localhost:8000/api
 ### Business Details
 - **Therapist**: VD. Priyanka Singh (B.A.M.S)
 - **Experience**: 13+ years clinical experience
-- **Location**: Frans Mortelmansstraat 68, Voorburg, Netherlands
+- **Location**: Frans Mortelmansstraat 68, 2273 LE Voorburg, Netherlands
 - **Phone**: +31 623955935
 - **Email**: priiyankasingh87@gmail.com
 

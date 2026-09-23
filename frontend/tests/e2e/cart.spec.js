@@ -36,7 +36,6 @@ test.describe('Cart', () => {
     await page.goto('/cart');
     await page.locator('#appt-date').fill('2030-01-01');
     await page.locator('#appt-time').fill('10:00');
-    await page.locator('#appt-location').selectOption('voorburg');
     await page.locator('#appt-consultation-type').selectOption('online');
     await page.getByTestId('confirm-appointment-button').click();
     await expect(page).toHaveURL(/\/dashboard$/); // clearCart + navigate('/dashboard')

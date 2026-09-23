@@ -4,8 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Calendar, Clock, User, Euro, MailWarning, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from '../lib/api';
@@ -18,12 +16,6 @@ const Dashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [rescheduleId, setRescheduleId] = useState(null);
-  const [rDate, setRDate] = useState('');
-  const [rTime, setRTime] = useState('');
-  const [rLocation, setRLocation] = useState('');
-  const [rConsultationType, setRConsultationType] = useState('');
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (authLoading) return; // wait for the auth check to resolve before deciding
@@ -53,7 +45,6 @@ const Dashboard = () => {
     }
   };
 
-  const getMinDate = () => new Date().toISOString().split('T')[0];
   const locationName = (id) => locations.find((l) => l.location_id === id)?.name || '';
   const consultationTypeLabel = (value) => (value === 'online' ? 'Online' : value === 'offline' ? 'Offline' : '');
 
@@ -63,50 +54,6 @@ const Dashboard = () => {
       toast.success(language === 'en' ? 'Verification email sent.' : 'Verificatie-e-mail verzonden.');
     } catch (error) {
       toast.error(error?.response?.data?.detail || (language === 'en' ? 'Could not send email.' : 'Kan e-mail niet verzenden.'));
-    }
-  };
-
-  const handleCancel = async (id) => {
-    if (!window.confirm(language === 'en' ? 'Cancel this appointment?' : 'Deze afspraak annuleren?')) return;
-    setBusy(true);
-    try {
-      await axios.post(`${API}/appointments/${id}/cancel`, {}, { withCredentials: true });
-      toast.success(language === 'en' ? 'Appointment cancelled.' : 'Afspraak geannuleerd.');
-      fetchData();
-    } catch (error) {
-      toast.error(error?.response?.data?.detail || (language === 'en' ? 'Could not cancel.' : 'Kan niet annuleren.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const startReschedule = (appt) => {
-    setRescheduleId(appt.appointment_id);
-    setRDate(appt.booking_date);
-    setRTime(appt.booking_time);
-    setRLocation(appt.location_id || '');
-    setRConsultationType(appt.consultation_type || '');
-  };
-
-  const submitReschedule = async (id) => {
-    if (!rDate || !rTime || !rLocation || !rConsultationType) {
-      toast.error(language === 'en' ? 'Please choose a location, consultation type, date and time.' : 'Kies een locatie, consulttype, datum en tijd.');
-      return;
-    }
-    if (new Date(`${rDate}T${rTime}`) < new Date()) {
-      toast.error(language === 'en' ? 'Please choose a date and time in the future.' : 'Kies een datum en tijd in de toekomst.');
-      return;
-    }
-    setBusy(true);
-    try {
-      await axios.put(`${API}/appointments/${id}/reschedule`, { booking_date: rDate, booking_time: rTime, location_id: rLocation, consultation_type: rConsultationType }, { withCredentials: true });
-      toast.success(language === 'en' ? 'Appointment rescheduled.' : 'Afspraak verzet.');
-      setRescheduleId(null);
-      fetchData();
-    } catch (error) {
-      toast.error(error?.response?.data?.detail || (language === 'en' ? 'Could not reschedule.' : 'Kan niet verzetten.'));
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -127,7 +74,6 @@ const Dashboard = () => {
     completed: 'bg-primary text-primary-foreground',
     cancelled: 'bg-destructive text-destructive-foreground',
   };
-  const canModify = (s) => s === 'pending' || s === 'confirmed';
 
   return (
     <div className="min-h-screen py-20 bg-muted">
@@ -229,65 +175,6 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </div>
-
-                  {canModify(appt.status) && (
-                    <div className="mt-3">
-                      {rescheduleId === appt.appointment_id ? (
-                        <div className="flex flex-wrap items-end gap-3 bg-muted/50 p-3 rounded-xl">
-                          <div className="space-y-1">
-                            <Label htmlFor={`rl-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Location' : 'Locatie'}</Label>
-                            <select
-                              id={`rl-${appt.appointment_id}`}
-                              value={rLocation}
-                              onChange={(e) => setRLocation(e.target.value)}
-                              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                            >
-                              <option value="" disabled>{language === 'en' ? 'Choose a location' : 'Kies een locatie'}</option>
-                              {locations.map((loc) => (
-                                <option key={loc.location_id} value={loc.location_id}>{loc.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor={`rc-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Consultation Type' : 'Consulttype'}</Label>
-                            <select
-                              id={`rc-${appt.appointment_id}`}
-                              value={rConsultationType}
-                              onChange={(e) => setRConsultationType(e.target.value)}
-                              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                            >
-                              <option value="" disabled>{language === 'en' ? 'Choose a type' : 'Kies een type'}</option>
-                              <option value="online">{language === 'en' ? 'Online' : 'Online'}</option>
-                              <option value="offline">{language === 'en' ? 'Offline' : 'Offline'}</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor={`rd-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Date' : 'Datum'}</Label>
-                            <Input id={`rd-${appt.appointment_id}`} type="date" min={getMinDate()} value={rDate} onChange={(e) => setRDate(e.target.value)} className="h-9" />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor={`rt-${appt.appointment_id}`} className="text-xs block">{language === 'en' ? 'Time' : 'Tijd'}</Label>
-                            <Input id={`rt-${appt.appointment_id}`} type="time" value={rTime} onChange={(e) => setRTime(e.target.value)} className="h-9" />
-                          </div>
-                          <Button size="sm" onClick={() => submitReschedule(appt.appointment_id)} disabled={busy}>
-                            {language === 'en' ? 'Save' : 'Opslaan'}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setRescheduleId(null)} disabled={busy}>
-                            {language === 'en' ? 'Cancel' : 'Annuleren'}
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => startReschedule(appt)} data-testid={`reschedule-${appt.appointment_id}`}>
-                            {language === 'en' ? 'Reschedule' : 'Verzetten'}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleCancel(appt.appointment_id)} className="text-destructive hover:text-destructive" data-testid={`cancel-${appt.appointment_id}`}>
-                            {language === 'en' ? 'Cancel' : 'Annuleren'}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

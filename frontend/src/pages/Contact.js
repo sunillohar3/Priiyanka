@@ -192,7 +192,7 @@ const Contact = () => {
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                   <p className="text-muted-foreground">
                     Frans Mortelmansstraat 68<br />
-                    Voorburg, Netherlands
+                    2273 LE Voorburg, Netherlands
                   </p>
                 </div>
                 <div className="flex items-start gap-3">

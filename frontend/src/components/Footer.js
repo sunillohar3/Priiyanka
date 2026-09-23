@@ -86,11 +86,11 @@ const Footer = () => {
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
-                <p>Frans Mortelmansstraat 68<br />Voorburg, Netherlands</p>
+                <p>The Hague Natural Health Centre<br />Badhuisstraat 224, 2584 HN</p>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
-                <p>The Hague Natural Health Centre<br />Badhuisstraat 224, 2584 HN</p>
+                <p>Frans Mortelmansstraat 68<br />2273 LE Voorburg, Netherlands</p>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />

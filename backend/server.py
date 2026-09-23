@@ -112,22 +112,23 @@ CRON_SECRET = _clean(os.getenv('CRON_SECRET'))
 # Public site base URL (for links in emails). Reuses the CORS frontend_url.
 SITE_URL = frontend_url
 
-# Practitioner working hours per weekday (Mon=0 .. Sun=6), in minutes from midnight.
-# Matches the Contact page: Mon-Fri 13:00-18:00, Sat 10:00-13:00, Sun closed.
+# Practitioner working hours per weekday (Mon=0 .. Sun=6), in minutes from
+# midnight. Each open day is pinned to a single location — Voorburg on
+# Monday/Friday, The Hague Centre on Tuesday/Wednesday/Thursday. Matches the
+# Contact page. Closed Saturday and Sunday.
 WORKING_HOURS = {
-    0: (13 * 60, 18 * 60),
-    1: (13 * 60, 18 * 60),
-    2: (13 * 60, 18 * 60),
-    3: (13 * 60, 18 * 60),
-    4: (13 * 60, 18 * 60),
-    5: (10 * 60, 13 * 60),
+    0: {"location_id": "voorburg", "range": (13 * 60, 18 * 60)},          # Monday
+    1: {"location_id": "the_hague_centre", "range": (10 * 60, 16 * 60)},  # Tuesday
+    2: {"location_id": "the_hague_centre", "range": (12 * 60, 16 * 60)},  # Wednesday
+    3: {"location_id": "the_hague_centre", "range": (10 * 60, 16 * 60)},  # Thursday
+    4: {"location_id": "voorburg", "range": (13 * 60, 18 * 60)},          # Friday
 }
 
 # The two physical locations the practitioner works from. Fixed list —
 # there is no admin UI to manage these; adding a third is a code change.
 LOCATIONS = [
-    {"location_id": "voorburg", "name": "Voorburg"},
     {"location_id": "the_hague_centre", "name": "The Hague Centre"},
+    {"location_id": "voorburg", "name": "Voorburg"},
 ]
 _VALID_LOCATION_IDS = {loc["location_id"] for loc in LOCATIONS}
 
@@ -829,9 +830,10 @@ def _time_to_minutes(value: str):
         return None
 
 
-def _hours_problem(date_str: str, time_str: str, duration: int):
-    """Pure check against working hours. Returns an error message or None.
-    Kept dependency-free (no DB) so it can be unit-tested."""
+def _hours_problem(date_str: str, time_str: str, duration: int, location_id: str = None):
+    """Pure check against working hours (and, if given, that the location is
+    the one open on that weekday). Returns an error message or None. Kept
+    dependency-free (no DB) so it can be unit-tested."""
     start = _time_to_minutes(time_str)
     if start is None:
         return "Please provide a valid time."
@@ -839,10 +841,12 @@ def _hours_problem(date_str: str, time_str: str, duration: int):
         weekday = datetime.strptime(date_str, "%Y-%m-%d").weekday()
     except Exception:
         return "Please provide a valid date."
-    hours = WORKING_HOURS.get(weekday)
-    if not hours:
+    schedule = WORKING_HOURS.get(weekday)
+    if not schedule:
         return "We are closed on the selected day. Please choose another date."
-    open_m, close_m = hours
+    if location_id and location_id != schedule["location_id"]:
+        return f"{_location_name(schedule['location_id'])} is the only location open on the selected day."
+    open_m, close_m = schedule["range"]
     if start < open_m or (start + duration) > close_m:
         oh = f"{open_m // 60:02d}:{open_m % 60:02d}-{close_m // 60:02d}:{close_m % 60:02d}"
         return f"Please choose a time within our opening hours ({oh})."
@@ -878,7 +882,7 @@ async def _slot_conflict(date_str: str, time_str: str, duration: int, location_i
     legacy appointment with no consultation_type on file (predates this
     field) still conflicts regardless of the new request's mode, since we
     don't actually know what mode it was."""
-    problem = _hours_problem(date_str, time_str, duration)
+    problem = _hours_problem(date_str, time_str, duration, location_id)
     if problem:
         return problem
 

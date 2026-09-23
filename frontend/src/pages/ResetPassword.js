@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { PasswordInput } from '../components/ui/password-input';
 import { Label } from '../components/ui/label';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSEO } from '../hooks/useSEO';
@@ -70,9 +70,8 @@ const ResetPassword = () => {
             <Label htmlFor="new-password">
               {language === 'en' ? 'New password' : 'Nieuw wachtwoord'} <span className="text-destructive" aria-hidden="true">*</span>
             </Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -85,9 +84,8 @@ const ResetPassword = () => {
             <Label htmlFor="confirm-password">
               {language === 'en' ? 'Confirm password' : 'Bevestig wachtwoord'} <span className="text-destructive" aria-hidden="true">*</span>
             </Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
